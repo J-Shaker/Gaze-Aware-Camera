@@ -40,7 +40,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 import java.util.concurrent.ExecutionException;
 
-// Mathew was here.
+// Mathew was here
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
