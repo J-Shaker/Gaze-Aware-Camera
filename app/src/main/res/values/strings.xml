@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Gaze Aware Camera</string>
+    <string name="button1">Album</string>
+    <string name="button2">Camera</string>
+    <string name="button3">Menu</string>
+
+    <string name="item1">Item 1</string>
+    <string name="item2">Item 2</string>
+    <string name="item3">Item 3</string>
+</resources>
