@@ -86,40 +86,5 @@
                 </LinearLayout>
 
             </LinearLayout>
-
-
-            <!--<Button
-                    android:id="@+id/dummy_button"
-                    style="?android:attr/buttonBarButtonStyle"
-                    android:layout_width="800dp"
-                    android:layout_height="525dp"
-                    android:layout_alignParentStart="true"
-                    android:layout_gravity="bottom"
-                    android:layout_marginEnd="-5dp"
-                    android:text="@string/dummy_button" />
-
-                <Button
-                    android:id="@+id/dummy_button3"
-                    style="?android:attr/buttonBarButtonStyle"
-                    android:layout_width="800dp"
-                    android:layout_height="525dp"
-                    android:layout_alignParentEnd="true"
-                    android:layout_gravity="bottom"
-                    android:layout_marginEnd="-5dp"
-                    android:text="@string/dummy_button3" />
-                    -->
         </LinearLayout>
-
-
-    <!--
-    <Button
-        android:id="@+id/photo_capture_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|center" />
-    -->
-
-    <!-- This FrameLayout insets its children based on system windows using
-         android:fitsSystemWindows. -->
-
 </FrameLayout>
