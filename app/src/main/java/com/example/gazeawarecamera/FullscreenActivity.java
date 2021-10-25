@@ -2,26 +2,9 @@ package com.example.gazeawarecamera;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.camera.core.Camera;
-import androidx.camera.core.CameraSelector;
-import androidx.camera.core.ImageAnalysis;
-import androidx.camera.core.ImageCapture;
-import androidx.camera.core.ImageProxy;
-import androidx.camera.core.Preview;
-import androidx.camera.lifecycle.ProcessCameraProvider;
-import androidx.camera.view.PreviewView;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.lifecycle.LifecycleOwner;
-
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.net.Uri;
+import android.media.Image;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -35,9 +18,34 @@ import android.widget.Button;
 import android.widget.PopupMenu;
 import android.widget.Toast;
 
-import com.example.gazeawarecamera.databinding.ActivityFullscreenBinding;
-import com.google.common.util.concurrent.ListenableFuture;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.OptIn;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.camera.core.CameraSelector;
+import androidx.camera.core.ImageAnalysis;
+import androidx.camera.core.ImageCapture;
+import androidx.camera.core.ImageProxy;
+import androidx.camera.core.Preview;
+import androidx.camera.lifecycle.ProcessCameraProvider;
+import androidx.camera.view.PreviewView;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.lifecycle.LifecycleOwner;
 
+import com.example.gazeawarecamera.databinding.ActivityFullscreenBinding;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.mlkit.vision.common.InputImage;
+import com.google.mlkit.vision.face.Face;
+import com.google.mlkit.vision.face.FaceDetection;
+import com.google.mlkit.vision.face.FaceDetector;
+import com.google.mlkit.vision.face.FaceDetectorOptions;
+
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 //the gostak distims the doshes
@@ -314,9 +322,42 @@ public class FullscreenActivity extends AppCompatActivity {
          */
         imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(this), new ImageAnalysis.Analyzer() {
             @Override
-            public void analyze(@NonNull ImageProxy image) {
-                // We implement our analysis code here
-                image.close();
+            public void analyze(@NonNull ImageProxy imageProxy) {
+
+                FaceDetectorOptions highAccuracyOpts =
+                        new FaceDetectorOptions.Builder()
+                                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
+                                .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
+                                .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
+                                .build();
+
+                @OptIn(markerClass = androidx.camera.core.ExperimentalGetImage.class)
+                Image mediaImage = imageProxy.getImage();
+                if (mediaImage != null) {
+                    InputImage image = InputImage.fromMediaImage(mediaImage, imageProxy.getImageInfo().getRotationDegrees());
+                    FaceDetector detector = FaceDetection.getClient(highAccuracyOpts);
+
+                    Task<List<Face>> result =
+                            detector.process(image)
+                                    .addOnSuccessListener(
+                                            new OnSuccessListener<List<Face>>() {
+                                                @Override
+                                                public void onSuccess(List<Face> faces) {
+                                                    // Task completed successfully
+                                                    // ...
+                                                }
+                                            })
+                                    .addOnFailureListener(
+                                            new OnFailureListener() {
+                                                @Override
+                                                public void onFailure(@NonNull Exception e) {
+                                                    // Task failed with an exception
+                                                    // ...
+                                                }
+                                            });
+
+                }
+                imageProxy.close();
             }
         });
         /*
