@@ -35,6 +35,7 @@ import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LifecycleOwner;
 
 import com.example.gazeawarecamera.databinding.ActivityFullscreenBinding;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -343,21 +344,26 @@ public class FullscreenActivity extends AppCompatActivity {
                                             new OnSuccessListener<List<Face>>() {
                                                 @Override
                                                 public void onSuccess(List<Face> faces) {
-                                                    // Task completed successfully
-                                                    // ...
+                                                    System.out.println("Face detected!");
                                                 }
                                             })
                                     .addOnFailureListener(
                                             new OnFailureListener() {
                                                 @Override
                                                 public void onFailure(@NonNull Exception e) {
-                                                    // Task failed with an exception
-                                                    // ...
+                                                    System.out.println("Face not detected!");
                                                 }
                                             });
+                    result.addOnCompleteListener(
+                            new OnCompleteListener() {
+                                @Override
+                                public void onComplete(@NonNull Task task) {
+                                    imageProxy.close();
+                                }
+                            });
+
 
                 }
-                imageProxy.close();
             }
         });
         /*
