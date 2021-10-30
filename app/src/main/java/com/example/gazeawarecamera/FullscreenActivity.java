@@ -338,30 +338,25 @@ public class FullscreenActivity extends AppCompatActivity {
                     InputImage image = InputImage.fromMediaImage(mediaImage, imageProxy.getImageInfo().getRotationDegrees());
                     FaceDetector detector = FaceDetection.getClient(highAccuracyOpts);
 
-                    Task<List<Face>> result =
-                            detector.process(image)
-                                    .addOnSuccessListener(
-                                            new OnSuccessListener<List<Face>>() {
-                                                @Override
-                                                public void onSuccess(List<Face> faces) {
-                                                    System.out.println("Face detected!");
-                                                }
-                                            })
-                                    .addOnFailureListener(
-                                            new OnFailureListener() {
-                                                @Override
-                                                public void onFailure(@NonNull Exception e) {
-                                                    System.out.println("Face not detected!");
-                                                }
-                                            });
-                    result.addOnCompleteListener(
-                            new OnCompleteListener() {
+                    Task<List<Face>> result = detector.process(image)
+                            .addOnSuccessListener(new OnSuccessListener<List<Face>>() {
                                 @Override
-                                public void onComplete(@NonNull Task task) {
+                                public void onSuccess(List<Face> faces) {
+                                    System.out.println(faces.isEmpty());
+                                }
+                            })
+                            .addOnFailureListener(new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull Exception e) {
+
+                                }
+                            })
+                            .addOnCompleteListener(new OnCompleteListener<List<Face>>() {
+                                @Override
+                                public void onComplete(@NonNull Task<List<Face>> task) {
                                     imageProxy.close();
                                 }
                             });
-
 
                 }
             }
