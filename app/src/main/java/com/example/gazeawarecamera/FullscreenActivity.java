@@ -321,50 +321,7 @@ public class FullscreenActivity extends AppCompatActivity {
          * We are implementing a custom analyzer for our ImageAnalysis object. Specifically, our
          * gaze detection algorithm. Here we override the default analyze method of ImageAnalysis.
          */
-        imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(this), new ImageAnalysis.Analyzer() {
-            @Override
-            public void analyze(@NonNull ImageProxy imageProxy) {
-
-                FaceDetectorOptions highAccuracyOpts =
-                        new FaceDetectorOptions.Builder()
-                                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
-                                .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
-                                .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
-                                .build();
-
-                @OptIn(markerClass = androidx.camera.core.ExperimentalGetImage.class)
-                Image mediaImage = imageProxy.getImage();
-                if (mediaImage != null) {
-                    InputImage image = InputImage.fromMediaImage(mediaImage, imageProxy.getImageInfo().getRotationDegrees());
-                    FaceDetector detector = FaceDetection.getClient(highAccuracyOpts);
-
-                    Task<List<Face>> result = detector.process(image)
-                            .addOnSuccessListener(new OnSuccessListener<List<Face>>() {
-                                @Override
-                                public void onSuccess(List<Face> faces) {
-                                    if (faces.isEmpty()) {
-                                        System.out.println("No face is detected.");
-                                    } else {
-                                        System.out.println("Face is detected.");
-                                    }
-                                }
-                            })
-                            .addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-
-                                }
-                            })
-                            .addOnCompleteListener(new OnCompleteListener<List<Face>>() {
-                                @Override
-                                public void onComplete(@NonNull Task<List<Face>> task) {
-                                    imageProxy.close();
-                                }
-                            });
-
-                }
-            }
-        });
+        imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(this), new ImageAnalyzer());
         /*
          * Then we create an ImageCapture object so that we may save individual frames as photos. We
          * need to create a method that handles saving an image, and this method will be called both

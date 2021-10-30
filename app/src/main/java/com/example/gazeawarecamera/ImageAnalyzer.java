@@ -30,38 +30,36 @@ public class ImageAnalyzer implements ImageAnalysis.Analyzer {
                 .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
                 .build();
 
-        @OptIn(markerClass = androidx.camera.core.ExperimentalGetImage.class) // Required opt in
-
+        @OptIn(markerClass = androidx.camera.core.ExperimentalGetImage.class)
         Image mediaImage = imageProxy.getImage();
         if (mediaImage != null) {
-
-
             InputImage image = InputImage.fromMediaImage(mediaImage, imageProxy.getImageInfo().getRotationDegrees());
+            FaceDetector detector = FaceDetection.getClient(highAccuracyOpts);
 
-            FaceDetector detector = FaceDetection.getClient();
+            Task<List<Face>> result = detector.process(image)
+                    .addOnSuccessListener(new OnSuccessListener<List<Face>>() {
+                        @Override
+                        public void onSuccess(List<Face> faces) {
+                            if (faces.isEmpty()) {
+                                System.out.println("There are no faces in view.");
+                            } else {
+                                System.out.println("There are " + faces.size() + " faces in view.");
+                            }
+                        }
+                    })
+                    .addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
 
-
-            Task<List<Face>> result =
-                    detector.process(image)
-                            .addOnSuccessListener(
-                                    new OnSuccessListener<List<Face>>() {
-                                        @Override
-                                        public void onSuccess(List<Face> faces) {
-                                            System.out.println("Face detected!");
-                                        }
-                                    })
-                            .addOnFailureListener(
-                                    new OnFailureListener() {
-                                        @Override
-                                        public void onFailure(@NonNull Exception e) {
-                                            System.out.println("Face not detected!");
-                                        }
-                                    });
-
-
+                        }
+                    })
+                    .addOnCompleteListener(new OnCompleteListener<List<Face>>() {
+                        @Override
+                        public void onComplete(@NonNull Task<List<Face>> task) {
+                            imageProxy.close();
+                        }
+                    });
         }
     }
-
-
-
 }
+
