@@ -342,7 +342,11 @@ public class FullscreenActivity extends AppCompatActivity {
                             .addOnSuccessListener(new OnSuccessListener<List<Face>>() {
                                 @Override
                                 public void onSuccess(List<Face> faces) {
-                                    System.out.println(faces.isEmpty());
+                                    if (faces.isEmpty()) {
+                                        System.out.println("No face is detected.");
+                                    } else {
+                                        System.out.println("Face is detected.");
+                                    }
                                 }
                             })
                             .addOnFailureListener(new OnFailureListener() {
