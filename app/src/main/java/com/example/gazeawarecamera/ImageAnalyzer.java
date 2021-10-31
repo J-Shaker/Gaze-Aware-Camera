@@ -50,7 +50,7 @@ public class ImageAnalyzer implements ImageAnalysis.Analyzer {
                     .addOnFailureListener(new OnFailureListener() {
                         @Override
                         public void onFailure(@NonNull Exception e) {
-
+                            // We do not need to handle this case at this time.
                         }
                     })
                     .addOnCompleteListener(new OnCompleteListener<List<Face>>() {
