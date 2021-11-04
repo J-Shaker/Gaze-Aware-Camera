@@ -9,82 +9,99 @@
     <!-- The primary full-screen view. This can be replaced with whatever view
          is needed to present your content, e.g. VideoView, SurfaceView,
          TextureView, etc. -->
-    <androidx.camera.view.PreviewView
-        android:id="@+id/fullscreenContent"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:keepScreenOn="true"
-        android:visibility="visible">
-    </androidx.camera.view.PreviewView>
+        android:orientation="vertical">
 
-    <LinearLayout
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/face_counter"
+            android:textSize="40sp"
+            android:textColor="@color/teal_200"
+            android:visibility="visible">
+        </TextView>
+
+        <androidx.camera.view.PreviewView
+            android:id="@+id/cameraView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:fitsSystemWindows="true"
+            android:keepScreenOn="true"
             android:visibility="visible">
+        </androidx.camera.view.PreviewView>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fitsSystemWindows="true"
+        android:visibility="visible">
+
+        <LinearLayout
+            android:id="@+id/fullscreen_content_controls"
+            style="@style/Widget.Theme.GazeAwareCamera.ButtonBar.Fullscreen"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center_horizontal"
+            android:orientation="vertical">
 
             <LinearLayout
-                android:id="@+id/fullscreen_content_controls"
-                style="@style/Widget.Theme.GazeAwareCamera.ButtonBar.Fullscreen"
+                android:id="@+id/containerLinearLayout"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_gravity="bottom|center_horizontal"
-                android:orientation="vertical">
+                android:baselineAligned="false"
+                android:weightSum="3">
 
                 <LinearLayout
-                    android:id="@+id/containerLinearLayout"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_gravity="bottom|center_horizontal"
-                    android:baselineAligned="false"
-                    android:weightSum="3">
+                    android:id="@+id/button1Container"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1">
 
-                    <LinearLayout
-                        android:id="@+id/button1Container"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1">
+                    <Button
+                        android:id="@+id/button1"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:onClick="openAlbum"
+                        android:text="@string/button1"
+                        tools:ignore="UsingOnClickInXml" />
 
-                        <Button
-                            android:id="@+id/button1"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:onClick="openAlbum"
-                            android:text="@string/button1"
-                            tools:ignore="UsingOnClickInXml" />
-
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/button2Container"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1">
-
-                        <Button
-                            android:id="@+id/button2"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:onClick="menu"
-                            android:text="@string/button2"
-                            tools:ignore="UsingOnClickInXml" />
-
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/button3Container"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1">
-
-                        <Button
-                            android:id="@+id/button3"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:text="@string/button3" />
-                    </LinearLayout>
                 </LinearLayout>
 
+                <LinearLayout
+                    android:id="@+id/button2Container"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1">
+
+                    <Button
+                        android:id="@+id/button2"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:onClick="menu"
+                        android:text="@string/button2"
+                        tools:ignore="UsingOnClickInXml" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/button3Container"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1">
+
+                    <Button
+                        android:id="@+id/button3"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:text="@string/button3" />
+                </LinearLayout>
             </LinearLayout>
+
         </LinearLayout>
+    </LinearLayout>
 </FrameLayout>
