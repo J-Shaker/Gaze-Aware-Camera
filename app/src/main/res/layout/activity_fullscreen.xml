@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:theme="@style/ThemeOverlay.GazeAwareCamera.FullscreenContainer"
-    tools:context=".FullscreenActivity">
+    tools:context=".MainActivity">
 
     <!-- The primary full-screen view. This can be replaced with whatever view
          is needed to present your content, e.g. VideoView, SurfaceView,
@@ -19,8 +19,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/face_counter"
-            android:textSize="40sp"
-            android:textColor="@color/teal_200"
+            android:textSize="36sp"
             android:visibility="visible">
         </TextView>
 
@@ -42,7 +41,6 @@
 
         <LinearLayout
             android:id="@+id/fullscreen_content_controls"
-            style="@style/Widget.Theme.GazeAwareCamera.ButtonBar.Fullscreen"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|center_horizontal"
