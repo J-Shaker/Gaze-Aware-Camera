@@ -85,9 +85,11 @@ public class MainActivity extends AppCompatActivity {
          * happening at the singular, latest instance.
          */
         ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
+                .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
                 .setTargetResolution(new Size(1280, 720))
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build();
+
         /*
          * We are implementing a custom analyzer for our ImageAnalysis object. Specifically, our
          * gaze detection algorithm. Here we override the default analyze method of ImageAnalysis.
