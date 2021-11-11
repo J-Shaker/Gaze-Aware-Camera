@@ -45,63 +45,14 @@ import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends AppCompatActivity {
 
+    private PreviewView previewView;
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
-    PreviewView previewView;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        getPermissionToUseCamera();
-        previewView = findViewById(R.id.cameraView);
-        cameraProviderFuture = ProcessCameraProvider.getInstance(this);
-        cameraProviderFuture.addListener(() -> {
-            try {
-                ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
-                bindUseCases(cameraProvider);
-            } catch (ExecutionException | InterruptedException e) {
-                // No errors need to be handled for this Future.
-                // This should never be reached.
-            }
-        }, ContextCompat.getMainExecutor(this));
-    }
-
-    public void updateFaceCounter(int numberOfFaces) {
-        StringBuilder text = new StringBuilder();
-        text.append("Faces detected: ").append(numberOfFaces);
-        TextView faceCounter = (TextView) findViewById(R.id.textView);
-        faceCounter.setText(text.toString());
-    }
-
-    public void openAlbum(View view) {
-        Button albumButton = (Button) findViewById(R.id.button1);
-        albumButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                startActivity(intent);
-            }
-        });
-    }
-
-    public void menu (View view) {
-        Button menuButton = (Button) findViewById(R.id.button3);
-        menuButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                PopupMenu menu = new PopupMenu(MainActivity.this, menuButton);
-                menu.getMenuInflater().inflate(R.menu.popup_menu, menu.getMenu());
-                menu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                    public boolean onMenuItemClick (MenuItem item) {
-                        Toast.makeText(MainActivity.this,
-                                "Item Clicked: " + item.getTitle(),
-                                Toast.LENGTH_SHORT).show();
-                        return true;
-                    }
-                });
-                menu.show();
-            }
-        });
+        startCamera();
     }
 
     private void getPermissionToUseCamera() {
@@ -205,4 +156,65 @@ public class MainActivity extends AppCompatActivity {
          */
         cameraProvider.bindToLifecycle((LifecycleOwner) this, cameraSelector, imageCapture, imageAnalysis, preview);
     }
+
+    public void startCamera() {
+        getPermissionToUseCamera();
+        previewView = findViewById(R.id.cameraView);
+        cameraProviderFuture = ProcessCameraProvider.getInstance(this);
+        cameraProviderFuture.addListener(() -> {
+            try {
+                ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
+                bindUseCases(cameraProvider);
+            } catch (ExecutionException | InterruptedException e) {
+                // No errors need to be handled for this Future.
+                // This should never be reached.
+            }
+        }, ContextCompat.getMainExecutor(this));
+    }
+
+    public void openAlbum(View view) {
+        Button albumButton = (Button) findViewById(R.id.button1);
+        albumButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                startActivity(intent);
+            }
+        });
+    }
+
+    public void menu(View view) {
+        Button menuButton = (Button) findViewById(R.id.button3);
+        menuButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                PopupMenu menu = new PopupMenu(MainActivity.this, menuButton);
+                menu.getMenuInflater().inflate(R.menu.popup_menu, menu.getMenu());
+                menu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    public boolean onMenuItemClick (MenuItem item) {
+                        Toast.makeText(MainActivity.this,
+                                "Item Clicked: " + item.getTitle(),
+                                Toast.LENGTH_SHORT).show();
+                        return true;
+                    }
+                });
+                menu.show();
+            }
+        });
+    }
+
+    public void updateFaceCounter(int numberOfFaces) {
+        StringBuilder text = new StringBuilder();
+        text.append("Faces detected: ").append(numberOfFaces);
+        TextView faceCounter = (TextView) findViewById(R.id.faceCounterTextView);
+        faceCounter.setText(text.toString());
+    }
+
+    public void updateGazeCounter(int numberOfGazes) {
+        StringBuilder text = new StringBuilder();
+        text.append("Faces detected: ").append(numberOfGazes);
+        TextView gazeCounter = (TextView) findViewById(R.id.gazeCounterTextView);
+        gazeCounter.setText(text.toString());
+    }
+
 }

@@ -6,30 +6,52 @@
     android:theme="@style/ThemeOverlay.GazeAwareCamera.FullscreenContainer"
     tools:context=".MainActivity">
 
-    <!-- The primary full-screen view. This can be replaced with whatever view
-         is needed to present your content, e.g. VideoView, SurfaceView,
-         TextureView, etc. -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/textView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/face_counter"
-            android:textSize="36sp"
-            android:visibility="visible">
-        </TextView>
-
-        <androidx.camera.view.PreviewView
-            android:id="@+id/cameraView"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:keepScreenOn="true"
-            android:visibility="visible">
-        </androidx.camera.view.PreviewView>
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:weightSum="2">
+
+            <TextView
+                android:id="@+id/faceCounterTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/face_counter"
+                android:textSize="30sp"
+                android:visibility="visible"
+                android:layout_weight="1">
+            </TextView>
+
+            <TextView
+                android:id="@+id/gazeCounterTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/gaze_counter"
+                android:textSize="30sp"
+                android:visibility="visible"
+                android:layout_weight="1">
+            </TextView>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <androidx.camera.view.PreviewView
+                android:id="@+id/cameraView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:keepScreenOn="true"
+                android:visibility="visible">
+            </androidx.camera.view.PreviewView>
+
+        </LinearLayout>
 
     </LinearLayout>
 
@@ -66,7 +88,8 @@
                         android:layout_height="match_parent"
                         android:onClick="openAlbum"
                         android:text="@string/button1"
-                        tools:ignore="UsingOnClickInXml" />
+                        tools:ignore="UsingOnClickInXml">
+                    </Button>
 
                 </LinearLayout>
 
@@ -82,7 +105,8 @@
                         android:layout_height="match_parent"
                         android:onClick="menu"
                         android:text="@string/button2"
-                        tools:ignore="UsingOnClickInXml" />
+                        tools:ignore="UsingOnClickInXml">
+                    </Button>
 
                 </LinearLayout>
 
@@ -96,10 +120,16 @@
                         android:id="@+id/button3"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:text="@string/button3" />
+                        android:text="@string/button3">
+                    </Button>
+
                 </LinearLayout>
+
             </LinearLayout>
 
+
         </LinearLayout>
+
     </LinearLayout>
+
 </FrameLayout>

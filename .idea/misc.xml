@@ -4,6 +4,8 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="..\:/Users/mbilo/AndroidStudioProjects/Gaze-Aware-Camera-2/app/src/main/res/layout/activity_fullscreen.xml" value="0.22962962962962963" />
+        <entry key="..\:/Users/mbilo/AndroidStudioProjects/Gaze-Aware-Camera-2/app/src/main/res/layout/activity_main.xml" value="0.1" />
+        <entry key="..\:/Users/mbilo/AndroidStudioProjects/Gaze-Aware-Camera-2/app/src/main/res/menu/popup_menu.xml" value="0.25" />
         <entry key="app/src/main/res/layout/activity_fullscreen.xml" value="0.296195652173913" />
         <entry key="app/src/main/res/menu/popup_menu.xml" value="0.19427083333333334" />
       </map>
