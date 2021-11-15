@@ -85,7 +85,7 @@ public class MainActivity extends AppCompatActivity {
          * happening at the singular, latest instance.
          */
         ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
-                .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
+                //.setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
                 .setTargetResolution(new Size(1280, 720))
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build();
