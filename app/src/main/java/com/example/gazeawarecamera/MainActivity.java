@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.Image;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Size;
 import android.view.MenuItem;
@@ -21,6 +22,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageCapture;
+import androidx.camera.core.ImageCaptureException;
 import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
@@ -40,8 +42,12 @@ import com.google.mlkit.vision.face.FaceDetection;
 import com.google.mlkit.vision.face.FaceDetector;
 import com.google.mlkit.vision.face.FaceDetectorOptions;
 
+import java.io.File;
+import java.util.Calendar;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -57,8 +63,38 @@ public class MainActivity extends AppCompatActivity {
 
     private void getPermissionToUseCamera() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.CAMERA}, 100);
+            ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.CAMERA}, 1);
         }
+    }
+
+    private void getPermissionToReadFromStorage() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+        }
+    }
+
+    private void getPermissionToWriteToStorage() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+        }
+    }
+
+    private File getPhotoPath() {
+        getPermissionToWriteToStorage();
+
+        // Case 1: The user is running Android 9 or earlier.
+        File picturesDirectory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "Pictures");
+
+        if (!picturesDirectory.exists()){
+            if (!picturesDirectory.mkdirs()){
+                return null;
+            }
+        }
+
+        return new File(picturesDirectory.getPath() + File.separator + "IMG" + Calendar.getInstance().getTime() + ".jpg");
+
+        // Case 2: The user is running Android 10 or later.
+        // We need to use the Media Store.
     }
 
     /*
@@ -145,6 +181,26 @@ public class MainActivity extends AppCompatActivity {
         ImageCapture imageCapture = new ImageCapture.Builder()
                 .setTargetRotation(previewView.getDisplay().getRotation())
                 .build();
+
+        Button captureButton = (Button) findViewById(R.id.button2);
+        Executor cameraExecutor = Executors.newSingleThreadExecutor();
+        captureButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ImageCapture.OutputFileOptions outputFileOptions = new ImageCapture.OutputFileOptions.Builder(getPhotoPath()).build();
+                imageCapture.takePicture(outputFileOptions, cameraExecutor,
+                        new ImageCapture.OnImageSavedCallback() {
+                            @Override
+                            public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
+                                System.out.println("Photo saved.");
+                            }
+                            @Override
+                            public void onError(@NonNull ImageCaptureException error) {
+                                System.out.println(error.toString());
+                            }
+                        });
+            }
+        });
         /*
          * Finally we create a preview object which provides the camera feed to our layout (GUI). In
          * order for the GUI to function properly, we need to set the surface provider. We are
@@ -218,5 +274,6 @@ public class MainActivity extends AppCompatActivity {
         TextView gazeCounter = (TextView) findViewById(R.id.gazeCounterTextView);
         gazeCounter.setText(text.toString());
     }
+
 
 }
