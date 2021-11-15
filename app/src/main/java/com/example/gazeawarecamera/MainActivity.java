@@ -11,6 +11,7 @@ import android.util.Size;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -182,7 +183,7 @@ public class MainActivity extends AppCompatActivity {
                 .setTargetRotation(previewView.getDisplay().getRotation())
                 .build();
 
-        Button captureButton = (Button) findViewById(R.id.button2);
+        ImageButton captureButton = (ImageButton) findViewById(R.id.button2);
         Executor cameraExecutor = Executors.newSingleThreadExecutor();
         captureButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -231,7 +232,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void openAlbum(View view) {
-        Button albumButton = (Button) findViewById(R.id.button1);
+        ImageButton albumButton = (ImageButton) findViewById(R.id.button1);
         albumButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -242,7 +243,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void menu(View view) {
-        Button menuButton = (Button) findViewById(R.id.button3);
+        ImageButton menuButton = (ImageButton) findViewById(R.id.button3);
         menuButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -270,7 +271,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void updateGazeCounter(int numberOfGazes) {
         StringBuilder text = new StringBuilder();
-        text.append("Faces detected: ").append(numberOfGazes);
+        text.append("Number of faces looking toward the camera: ").append(numberOfGazes);
         TextView gazeCounter = (TextView) findViewById(R.id.gazeCounterTextView);
         gazeCounter.setText(text.toString());
     }

@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:theme="@style/ThemeOverlay.GazeAwareCamera.FullscreenContainer"
-    tools:context=".FullscreenActivity">
+    tools:context=".MainActivity">
 
     <!-- The primary full-screen view. This can be replaced with whatever view
          is needed to present your content, e.g. VideoView, SurfaceView,
@@ -45,7 +45,6 @@
             app:layout_constraintTop_toBottomOf="@+id/faceCounterTextView">
         </TextView>
 
-
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -63,7 +62,8 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/button3"
             app:layout_constraintStart_toEndOf="@+id/button1"
-            tools:ignore="UsingOnClickInXml" />
+            tools:ignore="UsingOnClickInXml">
+        </ImageButton>
 
         <ImageButton
             android:id="@+id/button1"
@@ -74,7 +74,8 @@
             android:text="@string/button1"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            tools:ignore="UsingOnClickInXml" />
+            tools:ignore="UsingOnClickInXml">
+        </ImageButton>
 
         <ImageButton
             android:id="@+id/button3"
@@ -85,28 +86,9 @@
             android:text="@string/button3"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            tools:ignore="UsingOnClickInXml" />
+            tools:ignore="UsingOnClickInXml" >
+        </ImageButton>
 
-        <LinearLayout
-            android:id="@+id/fullscreen_content_controls"
-            style="@style/Widget.Theme.GazeAwareCamera.ButtonBar.Fullscreen"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|center_horizontal"
-            android:orientation="vertical"
-            app:layout_constraintBottom_toBottomOf="parent">
-
-            <!--<LinearLayout
-                android:id="@+id/containerLinearLayout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="bottom|center_horizontal"
-                android:baselineAligned="false"
-                android:orientation="horizontal"
-                android:weightSum="3">
-
-            </LinearLayout>-->
-
-        </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
+
 </FrameLayout>
