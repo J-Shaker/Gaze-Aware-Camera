@@ -1,135 +1,112 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:theme="@android:style/Theme.Black.NoTitleBar"
-    tools:context=".MainActivity">
+    android:theme="@style/ThemeOverlay.GazeAwareCamera.FullscreenContainer"
+    tools:context=".FullscreenActivity">
 
-    <LinearLayout
+    <!-- The primary full-screen view. This can be replaced with whatever view
+         is needed to present your content, e.g. VideoView, SurfaceView,
+         TextureView, etc. -->
+    <androidx.camera.view.PreviewView
+        android:id="@+id/cameraView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:keepScreenOn="true"
+        android:visibility="visible">
+    </androidx.camera.view.PreviewView>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/faceCounterTextView"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:weightSum="2">
+            android:text="@string/face_counter"
+            android:textSize="30sp"
+            android:visibility="visible"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+        </TextView>
 
-            <TextView
-                android:id="@+id/faceCounterTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/face_counter"
-                android:textSize="30sp"
-                android:visibility="visible"
-                android:layout_weight="1">
-            </TextView>
+        <TextView
+            android:id="@+id/gazeCounterTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/gaze_counter"
+            android:textSize="30sp"
+            android:visibility="visible"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/faceCounterTextView">
+        </TextView>
 
-            <TextView
-                android:id="@+id/gazeCounterTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/gaze_counter"
-                android:textSize="30sp"
-                android:visibility="visible"
-                android:layout_weight="1">
-            </TextView>
 
-        </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
-
-            <androidx.camera.view.PreviewView
-                android:id="@+id/cameraView"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:keepScreenOn="true"
-                android:visibility="visible">
-            </androidx.camera.view.PreviewView>
-
-        </LinearLayout>
-
-    </LinearLayout>
-
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fitsSystemWindows="true"
         android:visibility="visible">
 
+        <ImageButton
+            android:id="@+id/button2"
+            android:layout_width="75dp"
+            android:layout_height="75dp"
+            android:background="@drawable/rectangle_border"
+            android:text="@string/button2"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/button3"
+            app:layout_constraintStart_toEndOf="@+id/button1"
+            tools:ignore="UsingOnClickInXml" />
+
+        <ImageButton
+            android:id="@+id/button1"
+            android:layout_width="75dp"
+            android:layout_height="50dp"
+            android:background="@drawable/rectangle_border"
+            android:onClick="openAlbum"
+            android:text="@string/button1"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            tools:ignore="UsingOnClickInXml" />
+
+        <ImageButton
+            android:id="@+id/button3"
+            android:layout_width="75dp"
+            android:layout_height="50dp"
+            android:background="@drawable/rectangle_border"
+            android:onClick="menu"
+            android:text="@string/button3"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            tools:ignore="UsingOnClickInXml" />
+
         <LinearLayout
             android:id="@+id/fullscreen_content_controls"
+            style="@style/Widget.Theme.GazeAwareCamera.ButtonBar.Fullscreen"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|center_horizontal"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="parent">
 
-            <LinearLayout
+            <!--<LinearLayout
                 android:id="@+id/containerLinearLayout"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_gravity="bottom|center_horizontal"
                 android:baselineAligned="false"
+                android:orientation="horizontal"
                 android:weightSum="3">
 
-                <LinearLayout
-                    android:id="@+id/button1Container"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1">
-
-                    <Button
-                        android:id="@+id/button1"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:onClick="openAlbum"
-                        android:text="@string/button1"
-                        tools:ignore="UsingOnClickInXml">
-                    </Button>
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/button2Container"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1">
-
-                    <Button
-                        android:id="@+id/button2"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:onClick="menu"
-                        android:text="@string/button2"
-                        tools:ignore="UsingOnClickInXml">
-                    </Button>
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/button3Container"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1">
-
-                    <Button
-                        android:id="@+id/button3"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:text="@string/button3">
-                    </Button>
-
-                </LinearLayout>
-
-            </LinearLayout>
-
+            </LinearLayout>-->
 
         </LinearLayout>
-
-    </LinearLayout>
-
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </FrameLayout>
