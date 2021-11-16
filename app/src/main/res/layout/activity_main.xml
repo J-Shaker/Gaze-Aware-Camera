@@ -7,9 +7,6 @@
     android:theme="@style/ThemeOverlay.GazeAwareCamera.FullscreenContainer"
     tools:context=".MainActivity">
 
-    <!-- The primary full-screen view. This can be replaced with whatever view
-         is needed to present your content, e.g. VideoView, SurfaceView,
-         TextureView, etc. -->
     <androidx.camera.view.PreviewView
         android:id="@+id/cameraView"
         android:layout_width="match_parent"
@@ -29,6 +26,7 @@
             android:layout_height="wrap_content"
             android:text="@string/face_counter"
             android:textSize="30sp"
+            android:textColor="#FF8C00"
             android:visibility="visible"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
@@ -40,6 +38,7 @@
             android:layout_height="wrap_content"
             android:text="@string/gaze_counter"
             android:textSize="30sp"
+            android:textColor="#FF8C00"
             android:visibility="visible"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/faceCounterTextView">
