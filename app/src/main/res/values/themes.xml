@@ -16,7 +16,7 @@
 
     <style name="Theme.GazeAwareCamera.Fullscreen" parent="Theme.GazeAwareCamera">
         <item name="android:actionBarStyle">
-            @style/Widget.Theme.GazeAwareCamera.ActionBar.Fullscreen
+            @style/Theme.AppCompat.DayNight.NoActionBar
         </item>
         <item name="android:windowActionBarOverlay">true</item>
         <item name="android:windowBackground">@null</item>
