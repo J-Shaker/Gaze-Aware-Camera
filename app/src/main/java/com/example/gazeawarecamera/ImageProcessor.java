@@ -1,24 +1,29 @@
 package com.example.gazeawarecamera;
 
+import android.graphics.Point;
+import android.media.Image;
+
 import androidx.camera.core.ImageProxy;
 
-import com.google.mlkit.vision.face.Face;
+import com.google.mlkit.vision.face.FaceContour;
 
-import java.nio.ByteBuffer;
+import java.util.ArrayList;
 
 public class ImageProcessor {
 
-    private final ImageProxy imageOfFaces;
-    private final Face currentFace;
-
-    public ImageProcessor(ImageProxy imageProxy, Face face) {
-        imageOfFaces = imageProxy;
-        currentFace = face;
-
+    public static Image processImage(Image image) {
+        /*
+         *
+         */
+        return null;
     }
 
-    public Eye processImage() {
-        return new Eye();
+    public static ArrayList<Point> getPupilCenterCoordinates(Image image, FaceContour contour) {
+        /*
+         *
+         */
+        return null;
     }
+
 
 }

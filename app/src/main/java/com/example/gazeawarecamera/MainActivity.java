@@ -122,7 +122,7 @@ public class MainActivity extends AppCompatActivity {
          * happening at the singular, latest instance.
          */
         ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
-                //.setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
+                .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
                 .setTargetResolution(new Size(1280, 720))
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build();
@@ -151,12 +151,20 @@ public class MainActivity extends AppCompatActivity {
                             .addOnSuccessListener(new OnSuccessListener<List<Face>>() {
                                 @Override
                                 public void onSuccess(List<Face> faces) {
+                                    int numberOfFacesLookingTowardCamera = 0;
                                     if (faces.isEmpty()) {
                                         System.out.println("There are no faces in view.");
                                     } else {
+                                        Image processedImage = ImageProcessor.processImage(mediaImage);
+                                        numberOfFacesLookingTowardCamera = GazeDetector.detectGazes(faces, processedImage);
                                         System.out.println("There are " + faces.size() + " faces in view.");
+                                        System.out.println("There are " + numberOfFacesLookingTowardCamera + " people looking toward the camera.");
+                                        if (faces.size() == numberOfFacesLookingTowardCamera) {
+                                            System.out.println("Each face is looking toward the camera. Attempting to save image...");
+                                        }
                                     }
                                     updateFaceCounter(faces.size());
+                                    updateGazeCounter(numberOfFacesLookingTowardCamera);
                                 }
                             })
                             .addOnFailureListener(new OnFailureListener() {
