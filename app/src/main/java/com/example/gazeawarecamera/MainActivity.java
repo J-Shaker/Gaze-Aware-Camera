@@ -43,7 +43,12 @@ import com.google.mlkit.vision.face.FaceDetection;
 import com.google.mlkit.vision.face.FaceDetector;
 import com.google.mlkit.vision.face.FaceDetectorOptions;
 
+import org.opencv.android.OpenCVLoader;
+import org.opencv.core.Mat;
+import org.opencv.core.Point;
+
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -53,13 +58,17 @@ import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
 
+    public static final String SAVE_DIRECTORY = "Gaze Aware Camera Photos";
+    public static final String FILE_NAME_FORMAT = "IMG ";
+    public static final String FILE_TYPE = ".jpg";
+
     private PreviewView previewView;
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
-    private static final String SAVE_DIRECTORY = new String("Gaze Aware Camera Photos");
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        OpenCVLoader.initDebug();
         setContentView(R.layout.activity_main);
         startCamera();
     }
@@ -87,24 +96,24 @@ public class MainActivity extends AppCompatActivity {
          * The following code was partially adapted from a Stack Overflow post by user mshwf at the
          * following URL: https://stackoverflow.com/questions/65637610/saving-files-in-android-11-to-external-storagesdk-30
          */
-        File directory = null;
+        File photo = null;
+        String fileName = FILE_NAME_FORMAT + Calendar.getInstance().getTime() + FILE_TYPE;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            directory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES) + SAVE_DIRECTORY);
+            photo = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES) + File.separator + fileName);
         } else {
-            directory = new File(Environment.getExternalStorageDirectory() + File.separator + "Pictures" + SAVE_DIRECTORY);
+            photo = new File(Environment.getExternalStorageDirectory() + File.separator + Environment.DIRECTORY_PICTURES + File.separator + fileName);
         }
 
-        // Make sure the path directory exists.
-        if (!directory.exists()) {
+        // Make sure the path exists.
+        if (!photo.exists()) {
             // Make it, if it doesn't exit
-            boolean success = directory.mkdirs();
+            boolean success = photo.mkdirs();
             if (!success) {
-                directory = null;
+                photo = null;
             }
         }
-        return directory;
 
-        //"IMG_" + Calendar.getInstance().getTime()
+        return photo;
     }
 
     /*
@@ -169,8 +178,9 @@ public class MainActivity extends AppCompatActivity {
                                     if (faces.isEmpty()) {
                                         System.out.println("There are no faces in view.");
                                     } else {
-                                        //Image processedImage = ImageProcessor.processImage(mediaImage);
-                                        //numberOfFacesLookingTowardCamera = GazeDetector.detectGazes(faces, processedImage);
+                                        Mat imageMatrix = ImageProcessor.convertYUVtoMat(mediaImage);
+                                        ArrayList<Point> pupilCenterCoordinates = ImageProcessor.getPupilCenterCoordinates(imageMatrix);
+                                        // numberOfFacesLookingTowardCamera = GazeDetector.detectGazes(faces, processedImage);
                                         System.out.println("There are " + faces.size() + " faces in view.");
                                         System.out.println("There are " + numberOfFacesLookingTowardCamera + " people looking toward the camera.");
                                         if (faces.size() == numberOfFacesLookingTowardCamera) {
@@ -205,12 +215,16 @@ public class MainActivity extends AppCompatActivity {
                 .setTargetRotation(previewView.getDisplay().getRotation())
                 .build();
 
+
+
         ImageButton captureButton = (ImageButton) findViewById(R.id.button2);
         Executor cameraExecutor = Executors.newSingleThreadExecutor();
         captureButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
                 ImageCapture.OutputFileOptions outputFileOptions = new ImageCapture.OutputFileOptions.Builder(getPhotoPath()).build();
+
                 imageCapture.takePicture(outputFileOptions, cameraExecutor,
                         new ImageCapture.OnImageSavedCallback() {
                             @Override

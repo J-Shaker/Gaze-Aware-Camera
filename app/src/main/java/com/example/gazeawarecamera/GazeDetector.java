@@ -1,12 +1,12 @@
 package com.example.gazeawarecamera;
 
-import android.graphics.Point;
 import android.media.Image;
 
 import com.google.mlkit.vision.face.Face;
 
-import java.util.ArrayList;
 import java.util.List;
+
+import org.opencv.core.Point;
 
 public class GazeDetector {
 
@@ -32,14 +32,6 @@ public class GazeDetector {
             } catch(NullPointerException e) {
                 break;
             }
-            /*
-             * Now that we've established both eyes are open, we need to retrieve the coordinates of
-             * the center of the pupils. Image processor returns a list containing two points
-             */
-            ArrayList<Point> coordinates = ImageProcessor.getPupilCenterCoordinates(frame, faces.get(i).getContour(1));
-            /*
-             * 
-             */
 
 
         }
