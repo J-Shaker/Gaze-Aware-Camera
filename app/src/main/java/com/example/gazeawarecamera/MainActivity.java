@@ -50,6 +50,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+
 public class MainActivity extends AppCompatActivity {
 
     private PreviewView previewView;
@@ -122,7 +123,7 @@ public class MainActivity extends AppCompatActivity {
          * happening at the singular, latest instance.
          */
         ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
-                .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
+                //.setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
                 .setTargetResolution(new Size(1280, 720))
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build();
@@ -135,6 +136,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void analyze(@NonNull ImageProxy imageProxy) {
 
+                /*
+                 * We can increase performance by adjusting many of these settings. We can, for
+                 * example, change the landmark mode to only detect the landmarks we're using in our
+                 * calculation. We can also change the performance mode from accurate to fast.
+                 */
                 FaceDetectorOptions highAccuracyOpts = new FaceDetectorOptions.Builder()
                         .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
                         .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
@@ -155,8 +161,8 @@ public class MainActivity extends AppCompatActivity {
                                     if (faces.isEmpty()) {
                                         System.out.println("There are no faces in view.");
                                     } else {
-                                        Image processedImage = ImageProcessor.processImage(mediaImage);
-                                        numberOfFacesLookingTowardCamera = GazeDetector.detectGazes(faces, processedImage);
+                                        //Image processedImage = ImageProcessor.processImage(mediaImage);
+                                        //numberOfFacesLookingTowardCamera = GazeDetector.detectGazes(faces, processedImage);
                                         System.out.println("There are " + faces.size() + " faces in view.");
                                         System.out.println("There are " + numberOfFacesLookingTowardCamera + " people looking toward the camera.");
                                         if (faces.size() == numberOfFacesLookingTowardCamera) {
