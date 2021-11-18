@@ -46,6 +46,4 @@ dependencies {
 
     implementation 'com.google.mlkit:face-detection:16.1.2'
 
-    //implementation project(path: ':C:\\Users\\mbilo\\AndroidStudioProjects\\Gaze-Aware-Camera-2\\OpenCV-android-sdk\\sdk\\java', configuration: 'default')
-
 }

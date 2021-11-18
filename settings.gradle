@@ -8,4 +8,4 @@ dependencyResolutionManagement {
 }
 rootProject.name = "Gaze Aware Camera"
 include ':app'
-include ':OpenCV-android-sdk'
+include 'openCVLibrary454'
