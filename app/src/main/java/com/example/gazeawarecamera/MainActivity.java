@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.Image;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -54,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
 
     private PreviewView previewView;
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
+    private static final String SAVE_DIRECTORY = new String("Gaze Aware Camera Photos");
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -81,21 +83,28 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private File getPhotoPath() {
-        getPermissionToWriteToStorage();
-
-        // Case 1: The user is running Android 9 or earlier.
-        File picturesDirectory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "Pictures");
-
-        if (!picturesDirectory.exists()){
-            if (!picturesDirectory.mkdirs()){
-                return null;
-            }
+        /*
+         * The following code was partially adapted from a Stack Overflow post by user mshwf at the
+         * following URL: https://stackoverflow.com/questions/65637610/saving-files-in-android-11-to-external-storagesdk-30
+         */
+        File directory = null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            directory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES) + SAVE_DIRECTORY);
+        } else {
+            directory = new File(Environment.getExternalStorageDirectory() + File.separator + "Pictures" + SAVE_DIRECTORY);
         }
 
-        return new File(picturesDirectory.getPath() + File.separator + "IMG" + Calendar.getInstance().getTime() + ".jpg");
+        // Make sure the path directory exists.
+        if (!directory.exists()) {
+            // Make it, if it doesn't exit
+            boolean success = directory.mkdirs();
+            if (!success) {
+                directory = null;
+            }
+        }
+        return directory;
 
-        // Case 2: The user is running Android 10 or later.
-        // We need to use the Media Store.
+        //"IMG_" + Calendar.getInstance().getTime()
     }
 
     /*
