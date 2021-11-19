@@ -74,8 +74,12 @@ public class MainActivity extends AppCompatActivity {
     public static final String FILE_NAME_FORMAT = "IMG ";
     public static final String FILE_TYPE = ".jpg";
 
+    public static final int PIXEL_COUNT_HORIZONTAL = 1280;
+    public static final int PIXEL_COUNT_VERTICAL = 720;
+
     private final String MESSAGE_DESIRED_SUBJECTS_CHANGED = "The desired number of subjects has been changed to ";
     private final String MESSAGE_PHOTO_SAVED = "Photo saved!";
+    private final String MESSAGE_PHOTO_SAVE_FAILED = "Failed to save photo.";
 
     private PreviewView previewView;
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
@@ -87,23 +91,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         OpenCVLoader.initDebug();
         setContentView(R.layout.activity_main);
-
-        Point centerPoint = new Point(375.0, 335.0);
-        Point relativePoint1 = new Point(474, 217); // Roughly 45 in quad 1
-        Point relativePoint2 = new Point(200, 291); // Roughly 170 in quad 2
-        Point relativePoint3 = new Point(233, 472); // Roughly 230 in quad 3
-        Point relativePoint4 = new Point(453, 377); // Roughly 28 in quad 4
-
-        double answer1 = Geometry.computeAngleBetweenTwoPoints(centerPoint, relativePoint1);
-        double answer2 = Geometry.computeAngleBetweenTwoPoints(centerPoint, relativePoint2);
-        double answer3 = Geometry.computeAngleBetweenTwoPoints(centerPoint, relativePoint3);
-        double answer4 = Geometry.computeAngleBetweenTwoPoints(centerPoint, relativePoint4);
-
-        System.out.println("ANSWER 1 IS: " + answer1);
-        System.out.println("ANSWER 2 IS: " + answer2);
-        System.out.println("ANSWER 3 IS: " + answer3);
-        System.out.println("ANSWER 4 IS: " + answer4);
-
         startCamera();
     }
 
@@ -200,7 +187,7 @@ public class MainActivity extends AppCompatActivity {
                 // was recently added to CameraX and does not appear to work. We are instead
                 // performing this conversion with OpenCV in the ImageProcessor class with the
                 // convertYUVtoMat function.
-                .setTargetResolution(new Size(1280, 720))
+                .setTargetResolution(new Size(PIXEL_COUNT_HORIZONTAL, PIXEL_COUNT_VERTICAL))
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build();
         /*
@@ -285,34 +272,13 @@ public class MainActivity extends AppCompatActivity {
                                          * the image.
                                          */
                                         ArrayList<Point> pupilCenterCoordinates = ImageProcessor.getPupilCenterCoordinates(imageMatrix);
-
-                                        for (int i = 0; i < faces.size(); i++) {
-                                            FaceContour leftEye = faces.get(i).getContour(FaceContour.LEFT_EYE);
-                                            FaceContour rightEye = faces.get(i).getContour(FaceContour.RIGHT_EYE);
-                                            if (leftEye != null && rightEye != null) {
-                                                List leftEyePoints = leftEye.getPoints();
-                                                System.out.println("Left eye contour: ");
-                                                for (int j = 0; j < leftEyePoints.size(); j++) {
-                                                    System.out.println(leftEyePoints.get(j).toString());
-                                                }
-                                                List rightEyePoints = rightEye.getPoints();
-                                                System.out.println("Right eye contour: ");
-                                                for (int k = 0; k < rightEyePoints.size(); k++) {
-                                                    System.out.println(rightEyePoints.get(k).toString());
-                                                }
-                                            }
-                                        }
-                                        System.out.println("Pupil coordinates: ");
-                                        for (int i = 0; i < pupilCenterCoordinates.size(); i++) {
-                                            System.out.println(pupilCenterCoordinates.get(i).toString());
-                                        }
                                         /*
                                          * Finally, we run call the detectGazes method of
                                          * GazeDetector to determine the number of faces which are
                                          * looking toward the camera and update the value of
                                          * numberOfFacesLookingTowardCamera.
                                          */
-                                        //numberOfFacesLookingTowardCamera = GazeDetector.detectGazes(faces, pupilCenterCoordinates);
+                                        numberOfFacesLookingTowardCamera = GazeDetector.detectGazesWithAngles(faces, pupilCenterCoordinates);
                                         /*
                                          * Helpful print statements.
                                          */
@@ -382,7 +348,7 @@ public class MainActivity extends AppCompatActivity {
                             }
                             @Override
                             public void onError(@NonNull ImageCaptureException error) {
-                                Toast.makeText(MainActivity.this, error.toString(), Toast.LENGTH_SHORT).show();
+                                Toast.makeText(MainActivity.this, MESSAGE_PHOTO_SAVE_FAILED, Toast.LENGTH_SHORT).show();
                             }
                         });
             }

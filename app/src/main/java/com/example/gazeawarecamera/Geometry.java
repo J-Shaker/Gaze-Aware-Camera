@@ -13,7 +13,11 @@ package com.example.gazeawarecamera;
 
 import android.graphics.PointF;
 
+import androidx.annotation.NonNull;
+
 import org.opencv.core.Point;
+
+import java.util.ArrayList;
 
 /*
  * The Geometry class is a collection of static methods intended to perform simple computations we
@@ -33,7 +37,7 @@ public class Geometry {
      * these methods are strictly concerned with the horizontal distance between two points, it does
      * not matter what the y value is. The solution is simply x2 - x1.
      */
-    public static double computeHorizontalDistanceBetweenTwoPoints(Point firstPoint, Point secondPoint) {
+    public static double computeHorizontalDistanceBetweenTwoPoints(@NonNull Point firstPoint, @NonNull Point secondPoint) {
         /*
          * A simple method to compute the horizontal distance between two points in a 2D geometric
          * space. This method takes two OpenCV Point objects as its arguments.
@@ -41,7 +45,7 @@ public class Geometry {
         return secondPoint.x - firstPoint.x;
     }
 
-    public static double computeHorizontalDistanceBetweenTwoPoints(PointF firstPoint, PointF secondPoint) {
+    public static double computeHorizontalDistanceBetweenTwoPoints(@NonNull PointF firstPoint, @NonNull PointF secondPoint) {
         /*
          * A simple method to compute the horizontal distance between two points in a 2D geometric
          * space. This method takes two Ml Kit Point objects as its arguments.
@@ -49,7 +53,7 @@ public class Geometry {
         return secondPoint.x - firstPoint.x;
     }
 
-    public static double computeHorizontalDistanceBetweenTwoPoints(PointF firstPoint, Point secondPoint) {
+    public static double computeHorizontalDistanceBetweenTwoPoints(@NonNull PointF firstPoint, @NonNull Point secondPoint) {
         /*
          * A simple method to compute the horizontal distance between two points in a 2D geometric
          * space. This method takes one ML Kit PointF object as firstPoint and one OpenCV Point
@@ -64,7 +68,7 @@ public class Geometry {
      * these methods are strictly concerned with the vertical distance between two points, it does
      * not matter what the y value is. The solution is simply y2 - y1.
      */
-    public static double computeVerticalDistanceBetweenTwoPoints(Point firstPoint, Point secondPoint) {
+    public static double computeVerticalDistanceBetweenTwoPoints(@NonNull Point firstPoint, @NonNull Point secondPoint) {
         /*
          * A simple method to compute the vertical distance between two points in a 2D geometric
          * space. This method takes two OpenCV Point objects as its arguments.
@@ -72,7 +76,7 @@ public class Geometry {
         return secondPoint.y - firstPoint.y;
     }
 
-    public static double computeVerticalDistanceBetweenTwoPoints(PointF firstPoint, PointF secondPoint) {
+    public static double computeVerticalDistanceBetweenTwoPoints(@NonNull PointF firstPoint, @NonNull PointF secondPoint) {
         /*
          * A simple method to compute the vertical distance between two points in a 2D geometric
          * space. This method takes two Ml Kit Point objects as its arguments.
@@ -80,7 +84,7 @@ public class Geometry {
         return secondPoint.y - firstPoint.y;
     }
 
-    public static double computeVerticalDistanceBetweenTwoPoints(PointF firstPoint, Point secondPoint) {
+    public static double computeVerticalDistanceBetweenTwoPoints(@NonNull PointF firstPoint, @NonNull Point secondPoint) {
         /*
          * A simple method to compute the vertical distance between two points in a 2D geometric
          * space. This method takes one ML Kit PointF object as firstPoint and one OpenCV Point
@@ -94,7 +98,7 @@ public class Geometry {
      * them are the objects they take in as arguments, as discussed above. The method computes the
      * two differences x2 - x1 and y2 - y1 first and then returns from the
      */
-    public static double computeDistanceBetweenTwoPoints(Point firstPoint, Point secondPoint) {
+    public static double computeDistanceBetweenTwoPoints(@NonNull Point firstPoint, @NonNull Point secondPoint) {
         /*
          * A simple method to compute the distance between two points in a 2D geometric space. This
          * method takes two OpenCV Point objects as its arguments.
@@ -104,7 +108,7 @@ public class Geometry {
         return Math.sqrt(Math.pow(differenceInX, 2) - Math.pow(differenceInY, 2.0));
     }
 
-    public static double computeDistanceBetweenTwoPoints(PointF firstPoint, PointF secondPoint) {
+    public static double computeDistanceBetweenTwoPoints(@NonNull PointF firstPoint, @NonNull PointF secondPoint) {
         /*
          * A simple method to compute the distance between two points in a 2D geometric space. This
          * method takes two Ml Kit Point objects as its arguments.
@@ -114,7 +118,7 @@ public class Geometry {
         return Math.sqrt(Math.pow(differenceInX, 2) - Math.pow(differenceInY, 2.0));
     }
 
-    public static double computeDistanceBetweenTwoPoints(PointF firstPoint, Point secondPoint) {
+    public static double computeDistanceBetweenTwoPoints(@NonNull PointF firstPoint, @NonNull Point secondPoint) {
         /*
          * A simple method to compute the distance between two points in a 2D geometric space. This
          * method takes one ML Kit PointF object as firstPoint and one OpenCV Point object as
@@ -126,13 +130,50 @@ public class Geometry {
     }
 
     /*
-     *
+     * The next three methods compute the angle between two points. The three variations of this
+     * method, once more, correspond to the different point object combinations we may use. The
+     * calculation is made by considering one point to be the center of the circle from which the
+     * angle is being considered. To that end, a difference in x and y are computed which transform
+     * the second point the appropriate distances with respect to center. Then, the inverse tangent
+     * of the new Y divided by the new X yields the angle, which is returned after a covnersion to
+     * degrees.
      */
-    public static double computeAngleBetweenTwoPoints(Point centerPoint, Point relativePoint) {
+    public static double computeAngleBetweenTwoPoints(@NonNull Point centerPoint, @NonNull Point relativePoint) {
+        /*
+         * This method takes two OpenCV Point objects as its arguments.
+         */
         double differenceInY = relativePoint.y - centerPoint.y;
         double differenceInX = relativePoint.x - centerPoint.x;
         double answerInRadians = Math.atan2(differenceInY, differenceInX);
         return Math.toDegrees(answerInRadians);
+    }
+
+    public static double computeAngleBetweenTwoPoints(@NonNull PointF centerPoint, @NonNull PointF relativePoint) {
+        /*
+         * This method takes two ML Kit PointF objects as its arguments.
+         */
+        double differenceInY = relativePoint.y - centerPoint.y;
+        double differenceInX = relativePoint.x - centerPoint.x;
+        double answerInRadians = Math.atan2(differenceInY, differenceInX);
+        return Math.toDegrees(answerInRadians);
+    }
+
+    public static double computeAngleBetweenTwoPoints(@NonNull PointF centerPoint, @NonNull Point relativePoint) {
+        /*
+         * This method takes one ML Kit PointF object as centerPoint and one OpenCV Point object as
+         * relativePoint.
+         */
+        double differenceInY = relativePoint.y - centerPoint.y;
+        double differenceInX = relativePoint.x - centerPoint.x;
+        double answerInRadians = Math.atan2(differenceInY, differenceInX);
+        return Math.toDegrees(answerInRadians);
+    }
+
+    public static Point findPointInDomain(ArrayList<Point> points, double minimumX, double maximumX) {
+        for (int i = 0; i < points.size(); i++) {
+
+        }
+        return null;
     }
 
 
