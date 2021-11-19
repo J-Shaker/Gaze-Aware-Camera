@@ -87,6 +87,23 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         OpenCVLoader.initDebug();
         setContentView(R.layout.activity_main);
+
+        Point centerPoint = new Point(375.0, 335.0);
+        Point relativePoint1 = new Point(474, 217); // Roughly 45 in quad 1
+        Point relativePoint2 = new Point(200, 291); // Roughly 170 in quad 2
+        Point relativePoint3 = new Point(233, 472); // Roughly 230 in quad 3
+        Point relativePoint4 = new Point(453, 377); // Roughly 28 in quad 4
+
+        double answer1 = Geometry.computeAngleBetweenTwoPoints(centerPoint, relativePoint1);
+        double answer2 = Geometry.computeAngleBetweenTwoPoints(centerPoint, relativePoint2);
+        double answer3 = Geometry.computeAngleBetweenTwoPoints(centerPoint, relativePoint3);
+        double answer4 = Geometry.computeAngleBetweenTwoPoints(centerPoint, relativePoint4);
+
+        System.out.println("ANSWER 1 IS: " + answer1);
+        System.out.println("ANSWER 2 IS: " + answer2);
+        System.out.println("ANSWER 3 IS: " + answer3);
+        System.out.println("ANSWER 4 IS: " + answer4);
+
         startCamera();
     }
 

@@ -125,6 +125,16 @@ public class Geometry {
         return Math.sqrt(Math.pow(differenceInX, 2) - Math.pow(differenceInY, 2.0));
     }
 
+    /*
+     *
+     */
+    public static double computeAngleBetweenTwoPoints(Point centerPoint, Point relativePoint) {
+        double differenceInY = relativePoint.y - centerPoint.y;
+        double differenceInX = relativePoint.x - centerPoint.x;
+        double answerInRadians = Math.atan2(differenceInY, differenceInX);
+        return Math.toDegrees(answerInRadians);
+    }
+
 
 
 }
