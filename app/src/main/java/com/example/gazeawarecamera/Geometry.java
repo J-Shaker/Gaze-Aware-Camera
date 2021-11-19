@@ -34,29 +34,58 @@ public class Geometry {
      * not matter what the y value is. The solution is simply x2 - x1.
      */
     public static double computeHorizontalDistanceBetweenTwoPoints(Point firstPoint, Point secondPoint) {
+        /*
+         * A simple method to compute the horizontal distance between two points in a 2D geometric
+         * space. This method takes two OpenCV Point objects as its arguments.
+         */
         return secondPoint.x - firstPoint.x;
     }
 
     public static double computeHorizontalDistanceBetweenTwoPoints(PointF firstPoint, PointF secondPoint) {
+        /*
+         * A simple method to compute the horizontal distance between two points in a 2D geometric
+         * space. This method takes two Ml Kit Point objects as its arguments.
+         */
         return secondPoint.x - firstPoint.x;
     }
 
     public static double computeHorizontalDistanceBetweenTwoPoints(PointF firstPoint, Point secondPoint) {
+        /*
+         * A simple method to compute the horizontal distance between two points in a 2D geometric
+         * space. This method takes one ML Kit PointF object as firstPoint and one OpenCV Point
+         * object as secondPoint.
+         */
         return secondPoint.x - firstPoint.x;
     }
 
     /*
-     * The next three methods
+     * The first three methods are variations of a vertical distance computation. The only
+     * difference between them are the objects they take in as arguments, as discussed above. Since
+     * these methods are strictly concerned with the vertical distance between two points, it does
+     * not matter what the y value is. The solution is simply y2 - y1.
      */
     public static double computeVerticalDistanceBetweenTwoPoints(Point firstPoint, Point secondPoint) {
+        /*
+         * A simple method to compute the vertical distance between two points in a 2D geometric
+         * space. This method takes two OpenCV Point objects as its arguments.
+         */
         return secondPoint.y - firstPoint.y;
     }
 
     public static double computeVerticalDistanceBetweenTwoPoints(PointF firstPoint, PointF secondPoint) {
+        /*
+         * A simple method to compute the vertical distance between two points in a 2D geometric
+         * space. This method takes two Ml Kit Point objects as its arguments.
+         */
         return secondPoint.y - firstPoint.y;
     }
 
     public static double computeVerticalDistanceBetweenTwoPoints(PointF firstPoint, Point secondPoint) {
+        /*
+         * A simple method to compute the vertical distance between two points in a 2D geometric
+         * space. This method takes one ML Kit PointF object as firstPoint and one OpenCV Point
+         * object as secondPoint.
+         */
         return secondPoint.y - firstPoint.y;
     }
 
@@ -67,8 +96,8 @@ public class Geometry {
      */
     public static double computeDistanceBetweenTwoPoints(Point firstPoint, Point secondPoint) {
         /*
-         * A simple method to compute the difference between two points in a 2D geometric space.
-         * This method takes two OpenCV Point objects as its arguments.
+         * A simple method to compute the distance between two points in a 2D geometric space. This
+         * method takes two OpenCV Point objects as its arguments.
          */
         double differenceInX = secondPoint.x - firstPoint.x;
         double differenceInY = secondPoint.y - firstPoint.y;
@@ -77,8 +106,8 @@ public class Geometry {
 
     public static double computeDistanceBetweenTwoPoints(PointF firstPoint, PointF secondPoint) {
         /*
-         * A simple function to compute the difference between two points in a 2D geometric space.
-         * This function takes two ML Kit PointF objects as its arguments.
+         * A simple method to compute the distance between two points in a 2D geometric space. This
+         * method takes two Ml Kit Point objects as its arguments.
          */
         double differenceInX = secondPoint.x - firstPoint.x;
         double differenceInY = secondPoint.y - firstPoint.y;
@@ -87,8 +116,9 @@ public class Geometry {
 
     public static double computeDistanceBetweenTwoPoints(PointF firstPoint, Point secondPoint) {
         /*
-         * A simple function to compute the difference between two points in a 2D geometric space.
-         * This function takes a PointF object and a Point object as its arguments.
+         * A simple method to compute the distance between two points in a 2D geometric space. This
+         * method takes one ML Kit PointF object as firstPoint and one OpenCV Point object as
+         * secondPoint.
          */
         double differenceInX = secondPoint.x - firstPoint.x;
         double differenceInY = secondPoint.y - firstPoint.y;
