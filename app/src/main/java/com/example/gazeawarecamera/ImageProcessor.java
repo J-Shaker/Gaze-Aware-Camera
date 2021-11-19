@@ -1,3 +1,14 @@
+/*
+ * ICSI 499: Capstone Project in Computer Science
+ * Real Time Gaze Aware Mobile Application
+ * Team 7:
+ * Mathew Bilodeau (001396193)
+ * John Shaker (001301965)
+ * Brayden Lappies (001317811)
+ * Julian Oravetz (001329582)
+ * Sponsors: Dr. Pradeep Atrey and Omkar Kulkarni, Albany Lab for Privacy and Security
+ */
+
 package com.example.gazeawarecamera;
 
 import android.media.Image;
@@ -44,9 +55,12 @@ public class ImageProcessor {
         return  rgb;
     }
 
+    /*
+     * https://docs.opencv.org/3.4/d4/d70/tutorial_hough_circle.html
+     */
     public static ArrayList<Point> getPupilCenterCoordinates(Mat matrix) {
         /*
-         * https://docs.opencv.org/3.4/d4/d70/tutorial_hough_circle.html
+         *
          */
         Mat gray = new Mat();
         Imgproc.cvtColor(matrix, gray, Imgproc.COLOR_BGR2GRAY);
@@ -54,7 +68,7 @@ public class ImageProcessor {
         Imgproc.medianBlur(gray, gray, 5);
         Mat circles = new Mat();
         Imgproc.HoughCircles(gray, circles, Imgproc.HOUGH_GRADIENT, 1.0,
-                (double)gray.rows()/16, // change this value to detect circles with different distances to each other
+                (double) gray.rows()/16, // change this value to detect circles with different distances to each other
                 100.0, 30.0, 1, 30); // change the last two parameters
         // (min_radius & max_radius) to detect larger circles
 

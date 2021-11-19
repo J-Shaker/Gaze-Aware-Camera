@@ -1,3 +1,14 @@
+/*
+ * ICSI 499: Capstone Project in Computer Science
+ * Real Time Gaze Aware Mobile Application
+ * Team 7:
+ * Mathew Bilodeau (001396193)
+ * John Shaker (001301965)
+ * Brayden Lappies (001317811)
+ * Julian Oravetz (001329582)
+ * Sponsors: Dr. Pradeep Atrey and Omkar Kulkarni, Albany Lab for Privacy and Security
+ */
+
 package com.example.gazeawarecamera;
 
 import android.Manifest;
@@ -39,6 +50,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.face.Face;
+import com.google.mlkit.vision.face.FaceContour;
 import com.google.mlkit.vision.face.FaceDetection;
 import com.google.mlkit.vision.face.FaceDetector;
 import com.google.mlkit.vision.face.FaceDetectorOptions;
@@ -210,6 +222,7 @@ public class MainActivity extends AppCompatActivity {
                     FaceDetectorOptions highAccuracyOpts = new FaceDetectorOptions.Builder()
                             .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE) // Change if slow
                             .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL) // Change if slow (we need eye and face contours and nose)
+                            .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
                             .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
                             .build();
                     /*
@@ -255,13 +268,34 @@ public class MainActivity extends AppCompatActivity {
                                          * the image.
                                          */
                                         ArrayList<Point> pupilCenterCoordinates = ImageProcessor.getPupilCenterCoordinates(imageMatrix);
+
+                                        for (int i = 0; i < faces.size(); i++) {
+                                            FaceContour leftEye = faces.get(i).getContour(FaceContour.LEFT_EYE);
+                                            FaceContour rightEye = faces.get(i).getContour(FaceContour.RIGHT_EYE);
+                                            if (leftEye != null && rightEye != null) {
+                                                List leftEyePoints = leftEye.getPoints();
+                                                System.out.println("Left eye contour: ");
+                                                for (int j = 0; j < leftEyePoints.size(); j++) {
+                                                    System.out.println(leftEyePoints.get(j).toString());
+                                                }
+                                                List rightEyePoints = rightEye.getPoints();
+                                                System.out.println("Right eye contour: ");
+                                                for (int k = 0; k < rightEyePoints.size(); k++) {
+                                                    System.out.println(rightEyePoints.get(k).toString());
+                                                }
+                                            }
+                                        }
+                                        System.out.println("Pupil coordinates: ");
+                                        for (int i = 0; i < pupilCenterCoordinates.size(); i++) {
+                                            System.out.println(pupilCenterCoordinates.get(i).toString());
+                                        }
                                         /*
                                          * Finally, we run call the detectGazes method of
                                          * GazeDetector to determine the number of faces which are
                                          * looking toward the camera and update the value of
                                          * numberOfFacesLookingTowardCamera.
                                          */
-                                        numberOfFacesLookingTowardCamera = GazeDetector.detectGazes(faces, pupilCenterCoordinates);
+                                        //numberOfFacesLookingTowardCamera = GazeDetector.detectGazes(faces, pupilCenterCoordinates);
                                         /*
                                          * Helpful print statements.
                                          */
@@ -331,7 +365,7 @@ public class MainActivity extends AppCompatActivity {
                             }
                             @Override
                             public void onError(@NonNull ImageCaptureException error) {
-                                System.out.println(error.toString());
+                                Toast.makeText(MainActivity.this, error.toString(), Toast.LENGTH_SHORT).show();
                             }
                         });
             }

@@ -1,8 +1,18 @@
+/*
+ * ICSI 499: Capstone Project in Computer Science
+ * Real Time Gaze Aware Mobile Application
+ * Team 7:
+ * Mathew Bilodeau (001396193)
+ * John Shaker (001301965)
+ * Brayden Lappies (001317811)
+ * Julian Oravetz (001329582)
+ * Sponsors: Dr. Pradeep Atrey and Omkar Kulkarni, Albany Lab for Privacy and Security
+ */
+
 package com.example.gazeawarecamera;
 
-import android.media.Image;
-
 import com.google.mlkit.vision.face.Face;
+import com.google.mlkit.vision.face.FaceLandmark;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +44,11 @@ public class GazeDetector {
             } catch(NullPointerException e) {
                 break;
             }
+
+            FaceLandmark leftEye = faces.get(i).getLandmark(FaceLandmark.LEFT_EYE);
+            FaceLandmark rightEye = faces.get(i).getLandmark(FaceLandmark.RIGHT_EYE);
+            FaceLandmark nose = faces.get(i).getLandmark(FaceLandmark.NOSE_BASE);
+
 
 
         }
