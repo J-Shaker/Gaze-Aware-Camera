@@ -58,12 +58,17 @@ import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
 
-    public static final String SAVE_DIRECTORY = "Gaze Aware Camera Photos";
+    public static final String FILE_SAVE_DIRECTORY = "Gaze Aware Camera Photos";
     public static final String FILE_NAME_FORMAT = "IMG ";
     public static final String FILE_TYPE = ".jpg";
 
+    private final String MESSAGE_DESIRED_SUBJECTS_CHANGED = "The desired number of subjects has been changed to ";
+    private final String MESSAGE_PHOTO_SAVED = "Photo saved!";
+
     private PreviewView previewView;
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
+
+    private int desiredNumberOfSubjects = 1;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -96,41 +101,62 @@ public class MainActivity extends AppCompatActivity {
          * The following code was partially adapted from a Stack Overflow post by user mshwf at the
          * following URL: https://stackoverflow.com/questions/65637610/saving-files-in-android-11-to-external-storagesdk-30
          */
-        File photo = null;
-        String fileName = FILE_NAME_FORMAT + Calendar.getInstance().getTime() + FILE_TYPE;
+        final String fileName = FILE_NAME_FORMAT + Calendar.getInstance().getTime() + FILE_TYPE;
+        final String childPath = FILE_SAVE_DIRECTORY + File.separator + fileName;
+
+        File directory = null;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            photo = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES) + File.separator + fileName);
+            directory = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), childPath);
         } else {
-            photo = new File(Environment.getExternalStorageDirectory() + File.separator + Environment.DIRECTORY_PICTURES + File.separator + fileName);
+            directory = new File(Environment.getExternalStorageDirectory().toString(), childPath);
         }
 
         // Make sure the path exists.
-        if (!photo.exists()) {
+        if (!directory.exists()) {
             // Make it, if it doesn't exit
-            boolean success = photo.mkdirs();
+            boolean success = directory.mkdirs();
             if (!success) {
-                photo = null;
+                directory = null;
             }
         }
 
-        return photo;
+        return directory;
     }
 
     /*
-     * The majority of the code in the bindUseCases method comes from official Android Documentation
-     * found at https://developer.android.com/training/camerax. The code is responsible only for the
-     * set up of camera usage in an Android application using the CameraX API. We have provided
-     * comments below which explain the function of each code snippet.
+     * The majority of the code in the bindUseCases method comes from Google documentation found
+     * at https://developer.android.com/training/camerax and https://developers.google.com/ml-kit/reference/android.
+     * bindUseCases is responsible for initializing and configuring the camera. We have documented
+     * with comments what each line or lines of code do. Face detection via ML Kit is implemented
+     * directly at time of camera initialization and is in this method as well. Since face detection
+     * is the first trigger of gaze detection, the results of ImageProcessing and GazeDetection are
+     * also handled here.
      */
     private void bindUseCases(@NonNull ProcessCameraProvider cameraProvider) {
         cameraProvider.unbindAll();
         /*
-         * First we need a CameraSelector object that tells our application which camera to use. For
-         * now, we are defaulting to using the front camera, as that is most appropriate for our
-         * use case.
+         * First we need a CameraSelector object that tells our application which camera to use. Our
+         * application is best used with the front camera as we anticipate that users will
          */
         CameraSelector cameraSelector = new CameraSelector.Builder()
                 .requireLensFacing(CameraSelector.LENS_FACING_FRONT)
+                .build();
+        /*
+         * Next we create a preview object which provides the camera feed to our layout (GUI). In
+         * order for the GUI to function properly, we need to set the surface provider. We are
+         * letting Android set the surface provider and using that.
+         */
+        Preview preview = new Preview.Builder().build();
+        preview.setSurfaceProvider(previewView.getSurfaceProvider());
+        /*
+         * Then we create an ImageCapture object so that we may save individual frames as photos. We
+         * need to create a method that handles saving an image, and this method will be called both
+         * by the onClick method and the analyze method which is implemented above.
+         */
+        Executor cameraExecutor = Executors.newSingleThreadExecutor();
+        ImageCapture imageCapture = new ImageCapture.Builder()
+                .setIoExecutor(cameraExecutor)
+                .setTargetRotation(previewView.getDisplay().getRotation())
                 .build();
         /*
          * Next we create an ImageAnalysis object which allows us to analyze each frame the camera
@@ -141,10 +167,13 @@ public class MainActivity extends AppCompatActivity {
          */
         ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
                 //.setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
+                // This line causes the application to crash at camera initialization. The feature
+                // was recently added to CameraX and does not appear to work. We are instead
+                // performing this conversion with OpenCV in the ImageProcessor class with the
+                // convertYUVtoMat function.
                 .setTargetResolution(new Size(1280, 720))
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build();
-
         /*
          * We are implementing a custom analyzer for our ImageAnalysis object. Specifically, our
          * gaze detection algorithm. Here we override the default analyze method of ImageAnalysis.
@@ -152,41 +181,109 @@ public class MainActivity extends AppCompatActivity {
         imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(this), new ImageAnalysis.Analyzer() {
             @Override
             public void analyze(@NonNull ImageProxy imageProxy) {
-
                 /*
-                 * We can increase performance by adjusting many of these settings. We can, for
-                 * example, change the landmark mode to only detect the landmarks we're using in our
-                 * calculation. We can also change the performance mode from accurate to fast.
+                 * The ImageProxy object given as an argument to analyze is the image the camera is
+                 * currently looking at as an object in memory. The first thing we need to do is
+                 * convert this ImageProxy into an Image which the ML Kit FaceDetector can use as
+                 * input. This conversion method is considered experimental at this time and
+                 * requires an OptIn flag.
                  */
-                FaceDetectorOptions highAccuracyOpts = new FaceDetectorOptions.Builder()
-                        .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
-                        .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
-                        .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
-                        .build();
-
                 @OptIn(markerClass = androidx.camera.core.ExperimentalGetImage.class)
                 Image mediaImage = imageProxy.getImage();
+                /*
+                 * Before doing anything else, we need to make sure that mediaImage is not null.
+                 */
                 if (mediaImage != null) {
+                    /*
+                     * Now we can use the Image object to create an InputImage for FaceDetector. An
+                     * InputImage can use various image objects, but we are using the Image object
+                     * we got from the camera. When using an Image object, it is required to also
+                     * give an integer representing the rotation of the camera. We can get this
+                     * integer from the ImageProxy object in memory.
+                     */
                     InputImage image = InputImage.fromMediaImage(mediaImage, imageProxy.getImageInfo().getRotationDegrees());
-                    FaceDetector detector = FaceDetection.getClient(highAccuracyOpts);
-
-                    Task<List<Face>> result = detector.process(image)
+                    /*
+                     * Now we will set the options for FaceDetector. The following options are given
+                     * in the Android Developer Docs and optimize FaceDetector for accuracy. These
+                     * options can be changed to optimize for performance.
+                     */
+                    FaceDetectorOptions highAccuracyOpts = new FaceDetectorOptions.Builder()
+                            .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE) // Change if slow
+                            .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL) // Change if slow (we need eye and face contours and nose)
+                            .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
+                            .build();
+                    /*
+                     * We're ready to instantiate the FaceDetector.
+                     */
+                    FaceDetector faceDetector = FaceDetection.getClient(highAccuracyOpts);
+                    /*
+                     * The process method of FaceDetector returns a Task and a List of faces called
+                     * Face. Task allows us to add the OnSuccessListener, OnFailureListener, and
+                     * OnCompleteListener. It is important to note that the FaceDetector has not
+                     * failed if no faces are detected. Failure only refers to encountering an
+                     * error. The List faces can be used to conduct further analysis - particularly,
+                     * gaze detection.
+                     */
+                    Task<List<Face>> result = faceDetector.process(image)
                             .addOnSuccessListener(new OnSuccessListener<List<Face>>() {
                                 @Override
                                 public void onSuccess(List<Face> faces) {
+                                    /*
+                                     * We are assume that there is no one looking at the camera. It
+                                     * is essential to first initialize this integer to 0 so that
+                                     * our UI is refreshed with correct information.
+                                     */
                                     int numberOfFacesLookingTowardCamera = 0;
-                                    if (faces.isEmpty()) {
-                                        System.out.println("There are no faces in view.");
-                                    } else {
+                                    /*
+                                     * We only want to take action if faces.size() returns an
+                                     * integer greater than or equal to the desired number of
+                                     * subjects (faces). We only allow the user to select a maximum
+                                     * desired amount of four, though the application will attempt
+                                     * to perform gaze detection for any number of subjects detected
+                                     * by FaceDetector.
+                                     */
+                                    if (faces.size() >= desiredNumberOfSubjects) {
+                                        /*
+                                         * The first step toward determining whether each subject is
+                                         * looking toward the camera is to instantiate a Mat that
+                                         * OpenCV can use in the Hough Circle algorithm.
+                                         */
                                         Mat imageMatrix = ImageProcessor.convertYUVtoMat(mediaImage);
+                                        /*
+                                         * Now that we have our image in the form of a Mat object,
+                                         * we can obtain the centers of the pupils for each face in
+                                         * the image.
+                                         */
                                         ArrayList<Point> pupilCenterCoordinates = ImageProcessor.getPupilCenterCoordinates(imageMatrix);
-                                        // numberOfFacesLookingTowardCamera = GazeDetector.detectGazes(faces, processedImage);
+                                        /*
+                                         * Finally, we run call the detectGazes method of
+                                         * GazeDetector to determine the number of faces which are
+                                         * looking toward the camera and update the value of
+                                         * numberOfFacesLookingTowardCamera.
+                                         */
+                                        numberOfFacesLookingTowardCamera = GazeDetector.detectGazes(faces, pupilCenterCoordinates);
+                                        /*
+                                         * Helpful print statements.
+                                         */
                                         System.out.println("There are " + faces.size() + " faces in view.");
                                         System.out.println("There are " + numberOfFacesLookingTowardCamera + " people looking toward the camera.");
+                                        /*
+                                         * We now verify if number of subjects looking toward the
+                                         * camera is equivalent to the number of faces detected by
+                                         * FaceDetector.
+                                         */
                                         if (faces.size() == numberOfFacesLookingTowardCamera) {
+                                            /*
+                                             * Helpful print statement.
+                                             */
                                             System.out.println("Each face is looking toward the camera. Attempting to save image...");
                                         }
                                     }
+                                    /*
+                                     * Finally, we update our two UI TextViews to reflect changes
+                                     * in the number of faces detected and the number of gazes
+                                     * detected.
+                                     */
                                     updateFaceCounter(faces.size());
                                     updateGazeCounter(numberOfFacesLookingTowardCamera);
                                 }
@@ -200,36 +297,37 @@ public class MainActivity extends AppCompatActivity {
                             .addOnCompleteListener(new OnCompleteListener<List<Face>>() {
                                 @Override
                                 public void onComplete(@NonNull Task<List<Face>> task) {
+                                    /*
+                                     * The ImageProxy in memory must be closed because we have
+                                     * configured the camera to keep only the latest frame. If we
+                                     * failed to close the ImageProxy, we would not be able to
+                                     * analyze any more frames past the one which was not closed
+                                     * (which would always be the first in this case). Not that the
+                                     * onComplete method will run regardless of whether
+                                     * faceDetector.process() succeeds or fails.
+                                     */
                                     imageProxy.close();
                                 }
                             });
                 }
             }
         });
-        /*
-         * Then we create an ImageCapture object so that we may save individual frames as photos. We
-         * need to create a method that handles saving an image, and this method will be called both
-         * by the onClick method and the analyze method which is implemented above.
-         */
-        ImageCapture imageCapture = new ImageCapture.Builder()
-                .setTargetRotation(previewView.getDisplay().getRotation())
-                .build();
-
 
 
         ImageButton captureButton = (ImageButton) findViewById(R.id.button2);
-        Executor cameraExecutor = Executors.newSingleThreadExecutor();
         captureButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
                 ImageCapture.OutputFileOptions outputFileOptions = new ImageCapture.OutputFileOptions.Builder(getPhotoPath()).build();
-
                 imageCapture.takePicture(outputFileOptions, cameraExecutor,
                         new ImageCapture.OnImageSavedCallback() {
                             @Override
                             public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
-                                System.out.println("Photo saved.");
+                                /*
+                                 * Display a message indicating to the user that a photo has been
+                                 * saved.
+                                 */
+                                Toast.makeText(MainActivity.this, MESSAGE_PHOTO_SAVED, Toast.LENGTH_SHORT).show();
                             }
                             @Override
                             public void onError(@NonNull ImageCaptureException error) {
@@ -238,13 +336,6 @@ public class MainActivity extends AppCompatActivity {
                         });
             }
         });
-        /*
-         * Finally we create a preview object which provides the camera feed to our layout (GUI). In
-         * order for the GUI to function properly, we need to set the surface provider. We are
-         * letting Android set the surface provider and using that.
-         */
-        Preview preview = new Preview.Builder().build();
-        preview.setSurfaceProvider(previewView.getSurfaceProvider());
         /*
          * Tying it all together is the bindToLifecycle method of cameraProvider which executes the
          * three use cases established above.
@@ -287,9 +378,8 @@ public class MainActivity extends AppCompatActivity {
                 menu.getMenuInflater().inflate(R.menu.popup_menu, menu.getMenu());
                 menu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                     public boolean onMenuItemClick (MenuItem item) {
-                        Toast.makeText(MainActivity.this,
-                                "Item Clicked: " + item.getTitle(),
-                                Toast.LENGTH_SHORT).show();
+                        desiredNumberOfSubjects = Integer.parseInt(item.getTitle().toString());
+                        Toast.makeText(MainActivity.this, MESSAGE_DESIRED_SUBJECTS_CHANGED + item.getTitle() + ".", Toast.LENGTH_SHORT).show();
                         return true;
                     }
                 });

@@ -4,13 +4,15 @@ import android.media.Image;
 
 import com.google.mlkit.vision.face.Face;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.opencv.core.Point;
 
+
 public class GazeDetector {
 
-    public static int detectGazes(List<Face> faces, Image frame) {
+    public static int detectGazes(List<Face> faces, ArrayList<Point> pupilCenterCoordinates) {
 
         int numberOfFacesLookingTowardCamera = 0;
 
