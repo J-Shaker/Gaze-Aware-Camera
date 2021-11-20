@@ -34,6 +34,41 @@ public class GazeDetector {
      */
     private static final PointF IMAGE_CENTER_POINT = new PointF((float) MainActivity.PIXEL_COUNT_HORIZONTAL / 2, (float) MainActivity.PIXEL_COUNT_VERTICAL / 2);
     /*
+     * This enumeration allows us to classify the direction of a face's gaze. These classifications
+     * will be given once the angle of the pupil relative to the center of the eye is determined.
+     * Commented next to them are the degree ranges which warrant the given classification.
+     */
+    private enum Direction {
+        TOP_RIGHT_LOW, // (0-44 degrees)
+        TOP_RIGHT_HIGH, // (45-89 degrees)
+        TOP_LEFT_HIGH, // (90-134 degrees)
+        TOP_LEFT_LOW, // (135-179 degrees)
+        BOTTOM_LEFT_HIGH, // (180-224 degrees)
+        BOTTOM_LEFT_LOW, // (225-269 degrees)
+        BOTTOM_RIGHT_LOW, // (270-314 degrees)
+        BOTTOM_RIGHT_HIGH; // (315-359 degrees)
+
+        public static Direction getDirection(double angle) {
+            if (angle >= 0 && angle < 45) {
+                return TOP_RIGHT_LOW;
+            } else if (angle >= 45 && angle < 90) {
+                return TOP_RIGHT_HIGH;
+            } else if (angle >= 90 && angle < 135) {
+                return TOP_LEFT_HIGH;
+            } else if (angle >= 135 && angle < 180) {
+                return TOP_LEFT_LOW;
+            } else if (angle >= 180 && angle < 225) {
+                return BOTTOM_LEFT_HIGH;
+            } else if (angle >= 225 && angle < 270) {
+                return BOTTOM_LEFT_LOW;
+            } else if (angle >= 270 && angle < 315) {
+                return BOTTOM_RIGHT_LOW;
+            } else {
+                return BOTTOM_RIGHT_HIGH;
+            }
+        }
+    }
+    /*
      * Our GazeDetector takes in a List of faces and an ArrayList of Points. These points represent
      * the coordinates of the center of all of the eye pupils in the image. We need a way to
      * associate particular points in our ArrayList with the particular face we're analyzing at a
@@ -148,9 +183,10 @@ public class GazeDetector {
              * We are ready to determine the angle between the
              */
             double angleFromLeftEyeToEyeCenter = Geometry.computeAngleBetweenTwoPoints(rightEye.getPosition(), leftPupilCenterCoordinates);
-
-
             double angleFromRightEyeToEyeCenter = Geometry.computeAngleBetweenTwoPoints(rightEye.getPosition(), rightPupilCenterCoordinates);
+
+            Direction leftEyeDirection = Direction.getDirection(angleFromLeftEyeToEyeCenter);
+            Direction rightEyeDirection = Direction.getDirection(angleFromRightEyeToEyeCenter);
 
 
 
