@@ -348,6 +348,10 @@ public class MainActivity extends AppCompatActivity {
                             }
                             @Override
                             public void onError(@NonNull ImageCaptureException error) {
+                                /*
+                                 * Display a message indicating to the user that there was a problem
+                                 * while trying to save the photo.
+                                 */
                                 Toast.makeText(MainActivity.this, MESSAGE_PHOTO_SAVE_FAILED, Toast.LENGTH_SHORT).show();
                             }
                         });
