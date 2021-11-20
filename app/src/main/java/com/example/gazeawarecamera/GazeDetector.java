@@ -34,6 +34,52 @@ public class GazeDetector {
      */
     private static final PointF IMAGE_CENTER_POINT = new PointF((float) MainActivity.PIXEL_COUNT_HORIZONTAL / 2, (float) MainActivity.PIXEL_COUNT_VERTICAL / 2);
     /*
+     * Our GazeDetector takes in a List of faces and an ArrayList of Points. These points represent
+     * the coordinates of the center of all of the eye pupils in the image. We need a way to
+     * associate particular points in our ArrayList with the particular face we're analyzing at a
+     * given time. Since we know that the points are going to be at some horizontal location between
+     * an ear and the nose, we can isolate these points by finding the point such that the sum of
+     * the distances between the ear and the point and the point and the nose is equal to the
+     * distance between the nose and the ear.
+     */
+    public static Point isolatePupilCoordinates(ArrayList<Point> points, PointF minimumX, PointF maximumX) {
+        /*
+         * We have to iterate over the ArrayList of points. It is important to note that while an
+         * iteration like this could slow down the program, the size of the ArrayList is generally
+         * going to be 2 * the number of faces. Since we do not anticipate too many faces appearing
+         * in an image at a time, the performance hit should be negligible. One way in which we may
+         * increase performance is by removing the point from the list once it is found. While this
+         * can be done in O(1) time, Java also moves every other element over in O(n) time.
+         * Therefore, given that the anticipated data size is small, this may have negative
+         * consequences for performance rather than positive ones.
+         */
+        for (int i = 0; i < points.size(); i++) {
+            /*
+             * Get the point.
+             */
+            Point point = points.get(i);
+            /*
+             * As discussed above, we need to make 3 calculations. We are only concerned with the
+             * horizontal distance between these points. It would not benefit us to consider the
+             * actual distance between these points for the purposes of this algorithm.
+             */
+            double distanceFromMinToPoint = Geometry.computeHorizontalDistanceBetweenTwoPoints(minimumX, point);
+            double distanceFromPointToMax = Geometry.computeDistanceBetweenTwoPoints(maximumX, point);
+            double distanceFromMinToMax = Geometry.computeHorizontalDistanceBetweenTwoPoints(minimumX, maximumX);
+            /*
+             * Now, check if the sum of two smaller distances adds up to the longer distance. If it
+             * does, we have found our point, and will return it.
+             */
+            if (distanceFromMinToPoint + distanceFromPointToMax == distanceFromMinToMax) {
+                return points.get(i);
+            }
+        }
+        /*
+         * If the pupils could not be found, we will return null.
+         */
+        return null;
+    }
+    /*
      * The following method attempts to determine the number of faces in the image that are
      * looking toward the camera. Specifically, we compare the angle between the center of the image
      * and the center of the eye cavity and the angle between the center of the eye cavity and the
@@ -75,8 +121,8 @@ public class GazeDetector {
              */
             FaceLandmark leftEye = faces.get(i).getLandmark(FaceLandmark.RIGHT_EYE); // Note that the right eye is the viewer's left
             FaceLandmark rightEye = faces.get(i).getLandmark(FaceLandmark.LEFT_EYE); // Note that the left eye is the viewer's right
-            FaceLandmark leftEar = faces.get(i).getLandmark(FaceLandmark.RIGHT_EAR);
-            FaceLandmark rightEar = faces.get(i).getLandmark(FaceLandmark.LEFT_EAR);
+            FaceLandmark leftEar = faces.get(i).getLandmark(FaceLandmark.RIGHT_EAR); // Note that the right ear is the viewer's left
+            FaceLandmark rightEar = faces.get(i).getLandmark(FaceLandmark.LEFT_EAR); // Note that the left ear is the viewer's right
             FaceLandmark nose = faces.get(i).getLandmark(FaceLandmark.NOSE_BASE);
             if (leftEye == null || rightEye == null || leftEar == null || rightEar == null || nose == null) {
                 break;
@@ -84,16 +130,27 @@ public class GazeDetector {
             /*
              * We have a list of OpenCV Point objects which correspond to the coordinates of the
              * centers of the pupils for each face in the image. However, we do not know which
-             * Points correspond to which faces.
+             * Points correspond to which faces. We have implemented an algorithm which will use
+             * the coordinates of the nose and ears to isolate the point which is between them. For
+             * each face, there are two such points, on the left and right sides, and there is
+             * exactly one point in the list which corresponds to either side of each face. The only
+             * exception that could be encountered is if there are two faces, one on top of the
+             * other, in which the distances between their nose and ears are the same. It is an
+             * extremely unlikely case. If this point is not found, the algorithm will return null,
+             * so we perform yet another check and terminate if that is the case.
              */
-            Point leftPupilCoordinate = Geometry.findPointInDomain(pupilCenterCoordinates, leftEar.getPosition().x, nose.getPosition().x);
-            Point rightPupilCoordinate = Geometry.findPointInDomain(pupilCenterCoordinates, rightEar.getPosition().x, nose.getPosition().x);
+            Point leftPupilCenterCoordinates = isolatePupilCoordinates(pupilCenterCoordinates, leftEar.getPosition(), nose.getPosition());
+            Point rightPupilCenterCoordinates = isolatePupilCoordinates(pupilCenterCoordinates, nose.getPosition(), rightEar.getPosition());
+            if (leftPupilCenterCoordinates == null || rightPupilCenterCoordinates == null) {
+                break;
+            }
+            /*
+             * We are ready to determine the angle between the
+             */
+            double angleFromLeftEyeToEyeCenter = Geometry.computeAngleBetweenTwoPoints(rightEye.getPosition(), leftPupilCenterCoordinates);
 
 
-            double angleFromLeftEyeToEyeCenter = Geometry.computeAngleBetweenTwoPoints(rightEye.getPosition(), leftPupilCoordinate);
-
-
-            double angleFromRightEyeToEyeCenter = Geometry.computeAngleBetweenTwoPoints(rightEye.getPosition(), rightPupilCoordinate);
+            double angleFromRightEyeToEyeCenter = Geometry.computeAngleBetweenTwoPoints(rightEye.getPosition(), rightPupilCenterCoordinates);
 
 
 

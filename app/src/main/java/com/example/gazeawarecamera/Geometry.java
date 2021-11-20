@@ -17,8 +17,6 @@ import androidx.annotation.NonNull;
 
 import org.opencv.core.Point;
 
-import java.util.ArrayList;
-
 /*
  * The Geometry class is a collection of static methods intended to perform simple computations we
  * will require in determining the gaze of a face. Note that many of these computations will take in
@@ -27,8 +25,6 @@ import java.util.ArrayList;
  * implementation of a point, called PointF. Note that both implementations of point contain public
  * class variables called x and y. This makes implementing methods with different point objects
  * easy, but may cause confusion when you read the code.
- *
- * This class was designed and implemented by Mathew and John.
  */
 public class Geometry {
     /*
@@ -57,9 +53,12 @@ public class Geometry {
         /*
          * A simple method to compute the horizontal distance between two points in a 2D geometric
          * space. This method takes one ML Kit PointF object as firstPoint and one OpenCV Point
-         * object as secondPoint.
+         * object as secondPoint. In this method, we will return the absolute value of the
+         * difference. This is because if the PointF object has a greater x value than the Point
+         * object, you will always get a negative number. Since we are only concerned with the
+         * scalar distance anyhow, it doesn't really matter.
          */
-        return secondPoint.x - firstPoint.x;
+        return Math.abs(secondPoint.x - firstPoint.x);
     }
 
     /*
@@ -88,9 +87,12 @@ public class Geometry {
         /*
          * A simple method to compute the vertical distance between two points in a 2D geometric
          * space. This method takes one ML Kit PointF object as firstPoint and one OpenCV Point
-         * object as secondPoint.
+         * object as secondPoint. In this method, we will return the absolute value of the
+         * difference. This is because if the PointF object has a greater y value than the Point
+         * object, you will always get a negative number. Since we are only concerned with the
+         * scalar distance anyhow, it doesn't really matter.
          */
-        return secondPoint.y - firstPoint.y;
+        return Math.abs(secondPoint.y - firstPoint.y);
     }
 
     /*
@@ -168,14 +170,5 @@ public class Geometry {
         double answerInRadians = Math.atan2(differenceInY, differenceInX);
         return Math.toDegrees(answerInRadians);
     }
-
-    public static Point findPointInDomain(ArrayList<Point> points, double minimumX, double maximumX) {
-        for (int i = 0; i < points.size(); i++) {
-
-        }
-        return null;
-    }
-
-
 
 }
