@@ -26,7 +26,7 @@ import org.opencv.core.Point;
 
 public class GazeDetector {
     /*
-     * We need to determine the center point of the image. We are assuming that the center is
+     * We need to determine the center point of the image. We are assuming that the camera is in
      * roughly, if not exactly, the center of the image. So, in order to determine the center, we
      * can divide the horizontal and vertical pixel counts by 2. We only need to perform this
      * calculation once since the resolution of the image will not change while the application is
@@ -194,17 +194,20 @@ public class GazeDetector {
                 break;
             }
             /*
-             * We are ready to determine the angle between the
+             *
+             *
              */
-            double angleFromLeftEyeToEyeCenter = Geometry.computeAngleBetweenTwoPoints(rightEye.getPosition(), leftPupilCenterCoordinates);
-            double angleFromRightEyeToEyeCenter = Geometry.computeAngleBetweenTwoPoints(rightEye.getPosition(), rightPupilCenterCoordinates);
+            double angleFromLeftPupilToEyeCenter = Geometry.computeAngleBetweenTwoPoints(rightEye.getPosition(), leftPupilCenterCoordinates);
+            double angleFromRightPupilToEyeCenter = Geometry.computeAngleBetweenTwoPoints(rightEye.getPosition(), rightPupilCenterCoordinates);
 
-            Direction leftEyeDirection = Direction.getDirection(angleFromLeftEyeToEyeCenter);
-            Direction rightEyeDirection = Direction.getDirection(angleFromRightEyeToEyeCenter);
+            Direction leftPupilDirection = Direction.getDirection(angleFromLeftPupilToEyeCenter);
+            Direction rightPupilDirection = Direction.getDirection(angleFromRightPupilToEyeCenter);
 
             double angleFromLeftEyeToPhotoCenter = Geometry.computeAngleBetweenTwoPoints(IMAGE_CENTER_POINT, leftEye.getPosition());
             double angleFromRightEyeToPhotoCenter = Geometry.computeAngleBetweenTwoPoints(IMAGE_CENTER_POINT, rightEye.getPosition());
 
+            Direction leftEyeDirection = Direction.getDirection(angleFromLeftEyeToPhotoCenter);
+            Direction rightEyeDirection = Direction.getDirection(angleFromRightEyeToPhotoCenter);
         }
         return numberOfFacesLookingTowardCamera;
     }
@@ -241,6 +244,10 @@ public class GazeDetector {
             if (leftEye == null || rightEye == null || leftEar == null || rightEar == null || nose == null) {
                 break;
             }
+
+            System.out.println("Left eye coordinates: " + leftEye.getPosition().toString());
+            System.out.println("Right eye coordinates: " + rightEye.getPosition().toString());
+
             /*
              * This portion of the algorithm is the same as detectGazesWithAngles.
              */

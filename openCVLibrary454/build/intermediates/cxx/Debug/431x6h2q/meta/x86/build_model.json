@@ -29,10 +29,7 @@
     "intermediatesFolder": "C:\\Users\\mbilo\\AndroidStudioProjects\\Gaze-Aware-Camera-2\\openCVLibrary454\\build\\intermediates\\cxx\\Debug\\431x6h2q",
     "isDebuggableEnabled": true,
     "validAbiList": [
-      "ARMEABI_V7A",
-      "ARM64_V8A",
-      "X86",
-      "X86_64"
+      "X86"
     ],
     "buildTargetSet": [
       "opencv_jni_shared"
@@ -133,6 +130,7 @@
         "rootBuildGradleFolder": "C:\\Users\\mbilo\\AndroidStudioProjects\\Gaze-Aware-Camera-2",
         "sdkFolder": "C:\\Users\\mbilo\\AppData\\Local\\Android\\Sdk",
         "isBuildOnlyTargetAbiEnabled": true,
+        "ideBuildTargetAbi": "x86",
         "isCmakeBuildCohabitationEnabled": false,
         "isPrefabEnabled": false
       },

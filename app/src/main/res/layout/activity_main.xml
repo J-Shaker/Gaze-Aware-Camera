@@ -8,7 +8,7 @@
     tools:context=".MainActivity">
 
     <androidx.camera.view.PreviewView
-        android:id="@+id/cameraView"
+        android:id="@+id/preview_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:keepScreenOn="true"
@@ -21,7 +21,7 @@
         android:orientation="vertical">
 
         <TextView
-            android:id="@+id/faceCounterTextView"
+            android:id="@+id/face_counter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/face_counter"
@@ -33,7 +33,7 @@
         </TextView>
 
         <TextView
-            android:id="@+id/gazeCounterTextView"
+            android:id="@+id/gaze_counter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/gaze_counter"
@@ -41,7 +41,7 @@
             android:textColor="#FF8C00"
             android:visibility="visible"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/faceCounterTextView">
+            app:layout_constraintTop_toBottomOf="@+id/face_counter">
         </TextView>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
@@ -53,39 +53,36 @@
         android:visibility="visible">
 
         <ImageButton
-            android:id="@+id/button2"
+            android:id="@+id/capture_button"
             android:layout_width="75dp"
             android:layout_height="75dp"
             android:background="@drawable/rectangle_border"
-            android:text="@string/button2"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/button3"
-            app:layout_constraintStart_toEndOf="@+id/button1"
+            app:layout_constraintEnd_toStartOf="@+id/selector_menu"
+            app:layout_constraintStart_toEndOf="@+id/album_button"
             tools:ignore="UsingOnClickInXml">
         </ImageButton>
 
         <ImageButton
-            android:id="@+id/button1"
+            android:id="@+id/album_button"
             android:layout_width="75dp"
             android:layout_height="50dp"
             android:background="@drawable/rectangle_border"
             android:onClick="openAlbum"
-            android:text="@string/button1"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             tools:ignore="UsingOnClickInXml">
         </ImageButton>
 
         <ImageButton
-            android:id="@+id/button3"
+            android:id="@+id/selector_menu"
             android:layout_width="75dp"
             android:layout_height="50dp"
             android:background="@drawable/rectangle_border"
-            android:onClick="menu"
-            android:text="@string/button3"
+            android:onClick="openSelection"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            tools:ignore="UsingOnClickInXml" >
+            tools:ignore="UsingOnClickInXml">
         </ImageButton>
 
     </androidx.constraintlayout.widget.ConstraintLayout>

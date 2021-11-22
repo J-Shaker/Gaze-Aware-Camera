@@ -11,14 +11,20 @@
 
 package com.example.gazeawarecamera;
 
+import android.graphics.Bitmap;
+import android.graphics.PointF;
 import android.media.Image;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import org.opencv.android.Utils;
 import org.opencv.core.Core;
+import org.opencv.core.CvException;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import java.nio.ByteBuffer;
@@ -26,6 +32,20 @@ import java.util.ArrayList;
 
 
 public class ImageProcessor {
+
+    /*
+     * Potential Solutions
+     * 1) Bounding the search area using a rectangle. We need to determine the size of the box. A
+     *    fixed size is limiting because it may not work if you are too close or too far from the
+     *    camera.
+     * 2) MSER algorithm - maybe in OpenCV?
+     * 3) Detect iris before detecting pupils. The iris is easier to locate and gives bounds for the
+     *    pupils which are guaranteed to be in the iris.
+     * 4) Making the hough circle algorithm incredibly sensitive to everything. GazeDetection
+     *    is already programmed to weed out points which are not the pupils. However, increasing the
+     *    sensitivity of this algorithm doesn't necessarily mean we will get the pupils. Also, we
+     *    aren't yet sure how this can be done.
+     */
 
     public static Mat convertYUVtoMat(@NonNull Image img) {
         /*
@@ -52,6 +72,7 @@ public class ImageProcessor {
         Mat rgb = new Mat();
         Imgproc.cvtColor(yuv, rgb, Imgproc.COLOR_YUV2RGB_NV21, 3);
         Core.rotate(rgb, rgb, Core.ROTATE_90_CLOCKWISE);
+
         return  rgb;
     }
 
@@ -65,7 +86,12 @@ public class ImageProcessor {
         Mat gray = new Mat();
         Imgproc.cvtColor(matrix, gray, Imgproc.COLOR_BGR2GRAY);
 
+        // Imgproc.morphologyEx(gray, gray, 2, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5,5)));
+
+        // Imgproc.threshold(gray, gray, 127, 255, Imgproc.THRESH_OTSU);
+
         Imgproc.medianBlur(gray, gray, 5);
+
         Mat circles = new Mat();
         Imgproc.HoughCircles(gray, circles, Imgproc.HOUGH_GRADIENT, 1.0,
                 (double) gray.rows()/16, // change this value to detect circles with different distances to each other
@@ -80,6 +106,21 @@ public class ImageProcessor {
         }
 
         return pupilCenterCoordinates;
+    }
+
+    private static Bitmap convertMatToBitMap(Mat input){
+        Bitmap bmp = null;
+        Mat rgb = new Mat();
+        Imgproc.cvtColor(input, rgb, Imgproc.COLOR_BGR2RGB);
+
+        try {
+            bmp = Bitmap.createBitmap(rgb.cols(), rgb.rows(), Bitmap.Config.ARGB_8888);
+            Utils.matToBitmap(rgb, bmp);
+        }
+        catch (CvException e){
+            Log.d("Exception",e.getMessage());
+        }
+        return bmp;
     }
 
 

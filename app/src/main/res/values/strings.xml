@@ -4,8 +4,8 @@
     <string name="button2">Camera</string>
     <string name="button3">Menu</string>
 
-    <string name="face_counter">Faces detected: 0</string>
-    <string name="gaze_counter">Number of faces looking toward the camera: 0</string>
+    <string name="face_counter">Number of faces detected: %1$d</string>
+    <string name="gaze_counter">Number of faces looking toward the camera: %1$d</string>
 
     <string name="item1">1</string>
     <string name="item2">2</string>
