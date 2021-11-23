@@ -11,22 +11,36 @@
 
 package com.example.gazeawarecamera;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.PointF;
+import android.media.FaceDetector;
 import android.media.Image;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import com.google.mlkit.vision.face.FaceLandmark;
+
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.CvException;
 import org.opencv.core.CvType;
+import org.opencv.core.KeyPoint;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfKeyPoint;
+import org.opencv.core.MatOfRect;
 import org.opencv.core.Point;
+import org.opencv.core.Rect;
 import org.opencv.core.Size;
+import org.opencv.features2d.SimpleBlobDetector;
+import org.opencv.features2d.SimpleBlobDetector_Params;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.objdetect.CascadeClassifier;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
@@ -71,7 +85,7 @@ public class ImageProcessor {
         yuv.put(0, 0, nv21);
         Mat rgb = new Mat();
         Imgproc.cvtColor(yuv, rgb, Imgproc.COLOR_YUV2RGB_NV21, 3);
-        Core.rotate(rgb, rgb, Core.ROTATE_90_CLOCKWISE);
+        //Core.rotate(rgb, rgb, Core.ROTATE_90_CLOCKWISE);
 
         return  rgb;
     }
@@ -79,16 +93,16 @@ public class ImageProcessor {
     /*
      * https://docs.opencv.org/3.4/d4/d70/tutorial_hough_circle.html
      */
-    public static ArrayList<Point> getPupilCenterCoordinates(Mat matrix) {
+    public static ArrayList<Point> getListOfAllCircleCenterPoints(Mat matrix) {
         /*
          *
          */
         Mat gray = new Mat();
         Imgproc.cvtColor(matrix, gray, Imgproc.COLOR_BGR2GRAY);
 
-        // Imgproc.morphologyEx(gray, gray, 2, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5,5)));
+        Imgproc.morphologyEx(gray, gray, 2, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5,5)));
 
-        // Imgproc.threshold(gray, gray, 127, 255, Imgproc.THRESH_OTSU);
+        Imgproc.threshold(gray, gray, 127, 255, Imgproc.THRESH_OTSU);
 
         Imgproc.medianBlur(gray, gray, 5);
 
@@ -108,19 +122,63 @@ public class ImageProcessor {
         return pupilCenterCoordinates;
     }
 
-    private static Bitmap convertMatToBitMap(Mat input){
-        Bitmap bmp = null;
-        Mat rgb = new Mat();
-        Imgproc.cvtColor(input, rgb, Imgproc.COLOR_BGR2RGB);
 
-        try {
-            bmp = Bitmap.createBitmap(rgb.cols(), rgb.rows(), Bitmap.Config.ARGB_8888);
-            Utils.matToBitmap(rgb, bmp);
+
+    public static ArrayList<Point> getCircles(Mat imageMatrix, Rect boundary) {
+
+        Mat ROI = imageMatrix.submat(boundary);
+        Mat gray = new Mat();
+        Imgproc.cvtColor(ROI, gray, Imgproc.COLOR_BGR2GRAY);
+        Imgproc.morphologyEx(gray, gray, 2, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5,5)));
+
+        Imgproc.adaptiveThreshold(gray, gray, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 15, 40);
+        //Imgproc.medianBlur(gray, gray, 5);
+        Mat circles = new Mat();
+        Imgproc.HoughCircles(gray, circles, Imgproc.HOUGH_GRADIENT, 1.0,
+                (double) gray.rows()/16,
+                100.0, 30.0, 1, 30);
+
+        ArrayList<Point> circleCenterPoints = new ArrayList<>();
+        for (int i = 0; i < circles.cols(); i++) {
+            double[] c = circles.get(0, i);
+            Point center = new Point(Math.round(c[0]), Math.round(c[1]));
+            circleCenterPoints.add(center);
         }
-        catch (CvException e){
-            Log.d("Exception",e.getMessage());
+
+        for (int i = 0; i < circleCenterPoints.size(); i++) {
+            System.out.println(circleCenterPoints.get(i).toString());
         }
-        return bmp;
+
+        return circleCenterPoints;
+    }
+
+
+    public static void processImage(Mat originalImage, Rect faceBoundingBox) {
+        Mat greyscaledImage = new Mat();
+        Imgproc.cvtColor(originalImage, greyscaledImage, Imgproc.COLOR_BGR2GRAY);
+        Mat face = greyscaledImage.submat(faceBoundingBox);
+
+        MatOfRect eyes = new MatOfRect();
+        CascadeClassifier eyeCascade = new CascadeClassifier("haarcascade_eye.xml");
+        eyeCascade.detectMultiScale(face, eyes);
+        Rect[] eyeBoundingBoxes = eyes.toArray();
+
+        SimpleBlobDetector_Params parameters = new SimpleBlobDetector_Params();
+        parameters.set_filterByArea(true);
+        SimpleBlobDetector detector = SimpleBlobDetector.create(parameters);
+
+        for (int i = 0; i < eyeBoundingBoxes.length; i++) {
+            Mat eye = greyscaledImage.submat(eyeBoundingBoxes[i]);
+            Mat binarizedEye = new Mat();
+            Imgproc.adaptiveThreshold(eye, binarizedEye, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 11, 12);
+            MatOfKeyPoint keyPoints = new MatOfKeyPoint();
+            detector.detect(binarizedEye, keyPoints);
+
+            KeyPoint[] keyPointsArray = keyPoints.toArray();
+            for (int j = 0; j < keyPointsArray.length; j++) {
+                System.out.println(keyPointsArray[j].pt.toString());
+            }
+        }
     }
 
 

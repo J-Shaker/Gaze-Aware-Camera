@@ -12,6 +12,7 @@
 package com.example.gazeawarecamera;
 
 import android.graphics.PointF;
+import android.graphics.Rect;
 
 import androidx.annotation.NonNull;
 
@@ -21,6 +22,7 @@ import com.google.mlkit.vision.face.FaceLandmark;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opencv.core.Mat;
 import org.opencv.core.Point;
 
 
@@ -289,6 +291,77 @@ public class GazeDetector {
             if (horizontalDifference <= HORIZONTAL_TOLERANCE && verticalDifference <= VERTICAL_TOLERANCE) {
                 numberOfFacesLookingTowardCamera += 1;
             }
+        }
+        return numberOfFacesLookingTowardCamera;
+    }
+
+
+    /*
+     * Trying to implement algorithm without
+     */
+
+
+
+
+
+
+
+    public static int detectGazesWithLandmarks(@NonNull List<Face> faces, Mat imageMatrix) {
+        /*
+         * We assume that there is no one looking toward the camera at first.
+         */
+        int numberOfFacesLookingTowardCamera = 0;
+        /*
+         * Then, we begin iterating over the list of faces. For each face that is determined to be
+         * looking toward the camera, we will increment the value of
+         * numberOfFacesLookingTowardCamera by 1.
+         */
+        for (int i = 0; i < faces.size(); i++) {
+            /*
+             * This portion of the algorithm is the same as detectGazesWithAngles.
+             */
+            try {
+                if (faces.get(i).getLeftEyeOpenProbability() < 0.9 || faces.get(i).getRightEyeOpenProbability() < 0.9) {
+                    break;
+                }
+            } catch (NullPointerException e) {
+                break;
+            }
+            /*
+             * This portion of the algorithm is the same as detectGazesWithAngles.
+             */
+            FaceLandmark leftEye = faces.get(i).getLandmark(FaceLandmark.RIGHT_EYE); // Note that the right eye is the viewer's left
+            FaceLandmark rightEye = faces.get(i).getLandmark(FaceLandmark.LEFT_EYE); // Note that the left eye is the viewer's right
+            FaceLandmark leftEar = faces.get(i).getLandmark(FaceLandmark.RIGHT_EAR); // Note that the right ear is the viewer's left
+            FaceLandmark rightEar = faces.get(i).getLandmark(FaceLandmark.LEFT_EAR); // Note that the left ear is the viewer's right
+            FaceLandmark nose = faces.get(i).getLandmark(FaceLandmark.NOSE_BASE);
+            if (leftEye == null || rightEye == null || leftEar == null || rightEar == null || nose == null) {
+                break;
+            }
+
+            //double sideLength = Geometry.computeHorizontalDistanceBetweenTwoPoints(rightEye.getPosition(), leftEye.getPosition()); // Note that right is actually left.
+
+            //double leftEyeX = leftEye.getPosition().x;
+            //double leftEyeY = leftEye.getPosition().y;
+            //double rightEyeX = rightEye.getPosition().x;
+            //double rightEyeY = rightEye.getPosition().y;
+
+            //Rect leftRectangle = new Rect((int) (leftEyeX - (sideLength / 2)), (int) (leftEyeY + (sideLength / 2)), (int) sideLength, (int) sideLength);
+            //Rect rightRectangle = new Rect((int) (rightEyeX - (sideLength / 2)), (int) (rightEyeY + (sideLength / 2)), (int) sideLength, (int) sideLength);
+
+            System.out.println("Left eye coordinates: " + leftEye.getPosition().toString());
+            System.out.println("Right eye coordinates: " + rightEye.getPosition().toString());
+
+            Rect faceBoundingBoxFromMLKit = faces.get(i).getBoundingBox();
+            org.opencv.core.Rect faceBoundingBoxAsOpenCVRect = new org.opencv.core.Rect(faceBoundingBoxFromMLKit.left, faceBoundingBoxFromMLKit.top, faceBoundingBoxFromMLKit.width(), faceBoundingBoxFromMLKit.height());
+            ImageProcessor.processImage(imageMatrix, faceBoundingBoxAsOpenCVRect);
+
+
+            //ArrayList<Point> potentialLeftPupils = ImageProcessor.getCircles(imageMatrix, leftRectangle);
+            //ArrayList<Point> potentialRightPupils = ImageProcessor.getCircles(imageMatrix, rightRectangle);
+
+            //Point leftPupilCenterPoint = isolatePupilCoordinates(potentialLeftPupils, leftEar.getPosition(), nose.getPosition());
+            //Point rightPupilCenterPoint = isolatePupilCoordinates(potentialRightPupils, nose.getPosition(), rightEar.getPosition());
         }
         return numberOfFacesLookingTowardCamera;
     }

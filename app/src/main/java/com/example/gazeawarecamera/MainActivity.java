@@ -11,12 +11,16 @@
 
 package com.example.gazeawarecamera;
 
+import static android.content.ContentValues.TAG;
+
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.Image;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.util.Size;
 import android.view.MenuItem;
 import android.view.View;
@@ -32,7 +36,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageCapture;
-import androidx.camera.core.ImageCaptureException;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
@@ -53,7 +56,12 @@ import com.google.mlkit.vision.face.FaceDetectorOptions;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
+import org.opencv.objdetect.CascadeClassifier;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -106,6 +114,36 @@ public class MainActivity extends AppCompatActivity {
         setOnClickListeners();
         OpenCVLoader.initDebug();
     }
+
+//    private void openResourceFile() {
+//        try {
+//            InputStream inputStream = getResources().openRawResource(R.raw.haarcascade_eye);
+//            //File cascadeDir = getDir("cascade", Context.MODE_PRIVATE);
+//            cascadeFile = new File("haarcascade_eye.xml");
+//            FileOutputStream outputStream = new FileOutputStream(cascadeFile);
+//
+//            byte[] buffer = new byte[4096];
+//            int bytesRead;
+//            while ((bytesRead = inputStream.read(buffer)) != -1) {
+//                outputStream.write(buffer, 0, bytesRead);
+//            }
+//            inputStream.close();
+//            outputStream.close();
+//
+//            eyeCascade = new CascadeClassifier(cascadeFile.getAbsolutePath());
+//            if (eyeCascade.empty()) {
+//                Log.e(TAG, "Failed to load cascade classifier");
+//                eyeCascade = null;
+//            } else
+//                Log.i(TAG, "Loaded cascade classifier from " + cascadeFile.getAbsolutePath());
+//
+//            //cascadeDir.delete();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//            Log.e(TAG, "Failed to load cascade. Exception thrown: " + e);
+//        }
+//
+//    }
 
     private void getPermissionToUseCamera() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
@@ -273,14 +311,17 @@ public class MainActivity extends AppCompatActivity {
                                      * we can obtain the centers of the pupils for each face in
                                      * the image.
                                      */
-                                    ArrayList<Point> pupilCenterCoordinates = ImageProcessor.getPupilCenterCoordinates(imageMatrix);
+                                    //ArrayList<Point> pupilCenterCoordinates = ImageProcessor.getListOfAllCircleCenterPoints(imageMatrix);
+                                    //for (int i = 0; i < pupilCenterCoordinates.size(); i++) {
+                                    //    System.out.println(pupilCenterCoordinates.get(i).toString());
+                                    //}
                                     /*
                                      * Finally, we run call the detectGazes method of
                                      * GazeDetector to determine the number of faces which are
                                      * looking toward the camera and update the value of
                                      * numberOfFacesLookingTowardCamera.
                                      */
-                                    numberOfGazesDetected = GazeDetector.detectGazesWithAngles(faces, pupilCenterCoordinates);
+                                    numberOfGazesDetected = GazeDetector.detectGazesWithLandmarks(faces, imageMatrix);
                                     /*
                                      * We now verify if number of subjects looking toward the
                                      * camera is equivalent to the number of faces detected by
