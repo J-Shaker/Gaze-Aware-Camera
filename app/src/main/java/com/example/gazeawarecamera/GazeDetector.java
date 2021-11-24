@@ -214,86 +214,106 @@ public class GazeDetector {
         return numberOfFacesLookingTowardCamera;
     }
 
-    public static int detectGazesWithLandmarks(@NonNull List<Face> faces, ArrayList<Point> pupilCenterCoordinates) {
-        /*
-         * We assume that there is no one looking toward the camera at first.
-         */
-        int numberOfFacesLookingTowardCamera = 0;
-        /*
-         * Then, we begin iterating over the list of faces. For each face that is determined to be
-         * looking toward the camera, we will increment the value of
-         * numberOfFacesLookingTowardCamera by 1.
-         */
-        for (int i = 0; i < faces.size(); i++) {
-            /*
-             * This portion of the algorithm is the same as detectGazesWithAngles.
-             */
-            try {
-                if (faces.get(i).getLeftEyeOpenProbability() < 0.9 || faces.get(i).getRightEyeOpenProbability() < 0.9) {
-                    break;
-                }
-            } catch (NullPointerException e) {
-                break;
-            }
-            /*
-             * This portion of the algorithm is the same as detectGazesWithAngles.
-             */
-            FaceLandmark leftEye = faces.get(i).getLandmark(FaceLandmark.RIGHT_EYE); // Note that the right eye is the viewer's left
-            FaceLandmark rightEye = faces.get(i).getLandmark(FaceLandmark.LEFT_EYE); // Note that the left eye is the viewer's right
-            FaceLandmark leftEar = faces.get(i).getLandmark(FaceLandmark.RIGHT_EAR); // Note that the right ear is the viewer's left
-            FaceLandmark rightEar = faces.get(i).getLandmark(FaceLandmark.LEFT_EAR); // Note that the left ear is the viewer's right
-            FaceLandmark nose = faces.get(i).getLandmark(FaceLandmark.NOSE_BASE);
-            if (leftEye == null || rightEye == null || leftEar == null || rightEar == null || nose == null) {
-                break;
-            }
 
-            System.out.println("Left eye coordinates: " + leftEye.getPosition().toString());
-            System.out.println("Right eye coordinates: " + rightEye.getPosition().toString());
 
-            /*
-             * This portion of the algorithm is the same as detectGazesWithAngles.
-             */
-            Point leftPupilCenterCoordinates = isolatePupilCoordinates(pupilCenterCoordinates, leftEar.getPosition(), nose.getPosition());
-            Point rightPupilCenterCoordinates = isolatePupilCoordinates(pupilCenterCoordinates, nose.getPosition(), rightEar.getPosition());
-            if (leftPupilCenterCoordinates == null || rightPupilCenterCoordinates == null) {
-                break;
-            }
-            /*
-             * Now that we have all of our landmarks and have isolated the pupil center coordinates,
-             * we can compute some distances. In this algorithm, we are essentially looking for
-             * symmetry of the face with respect to the pupils. That is, we want the pupils to be
-             * about centered in the eye cavity. In order to find this, we need to compare the
-             * position of the pupils to known landmarks on the face. For the horizontal case, this
-             * is the nose. If the distance between the nose and one pupil is greater than the
-             * distance between the nose and the other pupil, then we know that they are looking to
-             * the left or to the right. Likewise, for the vertical case, if the pupils are above or
-             * below their respective eye cavity center points, then they are looking up or down. We
-             * will start by finding those distances as horizontal and vertical components.
-             */
-            double distanceFromLeftPupilToNose = Geometry.computeHorizontalDistanceBetweenTwoPoints(nose.getPosition(), leftPupilCenterCoordinates);
-            double distanceFromRightPupilToNose = Geometry.computeHorizontalDistanceBetweenTwoPoints(nose.getPosition(), rightPupilCenterCoordinates);
-            double distanceFromLeftPupilToCenterOfEye = Geometry.computeVerticalDistanceBetweenTwoPoints(leftEye.getPosition(), leftPupilCenterCoordinates);
-            double distanceFromRightPupilToCenterOfEye = Geometry.computeVerticalDistanceBetweenTwoPoints(leftEye.getPosition(), rightPupilCenterCoordinates);
-            /*
-             * And now that we have those, we will compare the left and right pupils by taking the
-             * difference. We don't care whether it's positive or negative, so we can take the
-             * absolute value.
-             */
-            double horizontalDifference = Math.abs(distanceFromLeftPupilToNose - distanceFromRightPupilToNose);
-            double verticalDifference = Math.abs(distanceFromLeftPupilToCenterOfEye - distanceFromRightPupilToCenterOfEye);
-            /*
-             * Finally we check if the two differences are less than or equal to our set tolerance
-             * values. The ideal case is that both differences are equal to 0. This would be
-             * indicative of a face in which both pupils are perfectly centered in the eye cavity.
-             * If we are within the permitted tolerances, we can increment
-             * numberOfFacesLookingTowardTheCamera - we got one.
-             */
-            if (horizontalDifference <= HORIZONTAL_TOLERANCE && verticalDifference <= VERTICAL_TOLERANCE) {
-                numberOfFacesLookingTowardCamera += 1;
-            }
-        }
-        return numberOfFacesLookingTowardCamera;
-    }
+
+    /*
+     * METHOD 2
+     */
+
+//    public static int detectGazesWithLandmarks(@NonNull List<Face> faces, Mat imageMatrix) {
+//        /*
+//         * We assume that there is no one looking toward the camera at first.
+//         */
+//        int numberOfFacesLookingTowardCamera = 0;
+//        /*
+//         * Then, we begin iterating over the list of faces. For each face that is determined to be
+//         * looking toward the camera, we will increment the value of
+//         * numberOfFacesLookingTowardCamera by 1.
+//         */
+//        for (int i = 0; i < faces.size(); i++) {
+//            /*
+//             * This portion of the algorithm is the same as detectGazesWithAngles.
+//             */
+//            try {
+//                if (faces.get(i).getLeftEyeOpenProbability() < 0.9 || faces.get(i).getRightEyeOpenProbability() < 0.9) {
+//                    break;
+//                }
+//            } catch (NullPointerException e) {
+//                break;
+//            }
+//            /*
+//             * This portion of the algorithm is the same as detectGazesWithAngles.
+//             */
+//            FaceLandmark leftEye = faces.get(i).getLandmark(FaceLandmark.LEFT_EYE);
+//            FaceLandmark rightEye = faces.get(i).getLandmark(FaceLandmark.RIGHT_EYE);
+//            FaceLandmark leftEar = faces.get(i).getLandmark(FaceLandmark.LEFT_EAR);
+//            FaceLandmark rightEar = faces.get(i).getLandmark(FaceLandmark.RIGHT_EAR);
+//            FaceLandmark nose = faces.get(i).getLandmark(FaceLandmark.NOSE_BASE);
+//            if (leftEye == null || rightEye == null || leftEar == null || rightEar == null || nose == null) {
+//                break;
+//            }
+//
+//            System.out.println("Left eye coordinates: " + leftEye.getPosition().toString());
+//            System.out.println("Right eye coordinates: " + rightEye.getPosition().toString());
+//
+//            double sideLength = Geometry.computeHorizontalDistanceBetweenTwoPoints(leftEye.getPosition(), rightEye.getPosition());
+//
+//            double leftEyeX = leftEye.getPosition().x;
+//            double leftEyeY = leftEye.getPosition().y;
+//            double rightEyeX = rightEye.getPosition().x;
+//            double rightEyeY = rightEye.getPosition().y;
+//
+//            org.opencv.core.Rect leftRect = new org.opencv.core.Rect((int) (leftEyeX - (sideLength / 2)), (int) (leftEyeY - (sideLength / 2)), (int) sideLength, (int) sideLength);
+//            org.opencv.core.Rect rightRect = new org.opencv.core.Rect((int) (rightEyeX - (sideLength / 2)), (int) (rightEyeY - (sideLength / 2)), (int) sideLength, (int) sideLength);
+//
+//            ArrayList<Point> circleCenterPointsInLeftBoundary = ImageProcessor.getCircles(imageMatrix, leftRect);
+//            ArrayList<Point> circleCenterPointsInRightBoundary = ImageProcessor.getCircles(imageMatrix, rightRect);
+//
+//            /*
+//             * This portion of the algorithm is the same as detectGazesWithAngles.
+//             */
+//            Point leftPupilCenterCoordinates = isolatePupilCoordinates(circleCenterPointsInLeftBoundary, leftEar.getPosition(), nose.getPosition());
+//            Point rightPupilCenterCoordinates = isolatePupilCoordinates(circleCenterPointsInRightBoundary, nose.getPosition(), rightEar.getPosition());
+//            if (leftPupilCenterCoordinates == null || rightPupilCenterCoordinates == null) {
+//                break;
+//            }
+//            /*
+//             * Now that we have all of our landmarks and have isolated the pupil center coordinates,
+//             * we can compute some distances. In this algorithm, we are essentially looking for
+//             * symmetry of the face with respect to the pupils. That is, we want the pupils to be
+//             * about centered in the eye cavity. In order to find this, we need to compare the
+//             * position of the pupils to known landmarks on the face. For the horizontal case, this
+//             * is the nose. If the distance between the nose and one pupil is greater than the
+//             * distance between the nose and the other pupil, then we know that they are looking to
+//             * the left or to the right. Likewise, for the vertical case, if the pupils are above or
+//             * below their respective eye cavity center points, then they are looking up or down. We
+//             * will start by finding those distances as horizontal and vertical components.
+//             */
+//            double distanceFromLeftPupilToNose = Geometry.computeHorizontalDistanceBetweenTwoPoints(nose.getPosition(), leftPupilCenterCoordinates);
+//            double distanceFromRightPupilToNose = Geometry.computeHorizontalDistanceBetweenTwoPoints(nose.getPosition(), rightPupilCenterCoordinates);
+//            double distanceFromLeftPupilToCenterOfEye = Geometry.computeVerticalDistanceBetweenTwoPoints(leftEye.getPosition(), leftPupilCenterCoordinates);
+//            double distanceFromRightPupilToCenterOfEye = Geometry.computeVerticalDistanceBetweenTwoPoints(leftEye.getPosition(), rightPupilCenterCoordinates);
+//            /*
+//             * And now that we have those, we will compare the left and right pupils by taking the
+//             * difference. We don't care whether it's positive or negative, so we can take the
+//             * absolute value.
+//             */
+//            double horizontalDifference = Math.abs(distanceFromLeftPupilToNose - distanceFromRightPupilToNose);
+//            double verticalDifference = Math.abs(distanceFromLeftPupilToCenterOfEye - distanceFromRightPupilToCenterOfEye);
+//            /*
+//             * Finally we check if the two differences are less than or equal to our set tolerance
+//             * values. The ideal case is that both differences are equal to 0. This would be
+//             * indicative of a face in which both pupils are perfectly centered in the eye cavity.
+//             * If we are within the permitted tolerances, we can increment
+//             * numberOfFacesLookingTowardTheCamera - we got one.
+//             */
+//            if (horizontalDifference <= HORIZONTAL_TOLERANCE && verticalDifference <= VERTICAL_TOLERANCE) {
+//                numberOfFacesLookingTowardCamera += 1;
+//            }
+//        }
+//        return numberOfFacesLookingTowardCamera;
+//    }
 
 
     /*
@@ -338,16 +358,6 @@ public class GazeDetector {
             if (leftEye == null || rightEye == null || leftEar == null || rightEar == null || nose == null) {
                 break;
             }
-
-            //double sideLength = Geometry.computeHorizontalDistanceBetweenTwoPoints(rightEye.getPosition(), leftEye.getPosition()); // Note that right is actually left.
-
-            //double leftEyeX = leftEye.getPosition().x;
-            //double leftEyeY = leftEye.getPosition().y;
-            //double rightEyeX = rightEye.getPosition().x;
-            //double rightEyeY = rightEye.getPosition().y;
-
-            //Rect leftRectangle = new Rect((int) (leftEyeX - (sideLength / 2)), (int) (leftEyeY + (sideLength / 2)), (int) sideLength, (int) sideLength);
-            //Rect rightRectangle = new Rect((int) (rightEyeX - (sideLength / 2)), (int) (rightEyeY + (sideLength / 2)), (int) sideLength, (int) sideLength);
 
             System.out.println("Left eye coordinates: " + leftEye.getPosition().toString());
             System.out.println("Right eye coordinates: " + rightEye.getPosition().toString());

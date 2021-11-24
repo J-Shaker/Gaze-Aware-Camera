@@ -11,6 +11,8 @@
 
 package com.example.gazeawarecamera;
 
+import static com.example.gazeawarecamera.MainActivity.eyeCascade;
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.PointF;
@@ -61,33 +63,31 @@ public class ImageProcessor {
      *    aren't yet sure how this can be done.
      */
 
-    public static Mat convertYUVtoMat(@NonNull Image img) {
+
+    public static Mat convertYUVtoMat(@NonNull Image originalImage) {
         /*
          * https://stackoverflow.com/questions/58102717/android-camerax-analyzer-image-with-format-yuv-420-888-to-opencv-mat
          */
-        byte[] nv21;
-
-        ByteBuffer yBuffer = img.getPlanes()[0].getBuffer();
-        ByteBuffer uBuffer = img.getPlanes()[1].getBuffer();
-        ByteBuffer vBuffer = img.getPlanes()[2].getBuffer();
+        Image.Plane[] planes = originalImage.getPlanes();
+        ByteBuffer yBuffer = planes[0].getBuffer();
+        ByteBuffer uBuffer = planes[1].getBuffer();
+        ByteBuffer vBuffer = planes[2].getBuffer();
 
         int ySize = yBuffer.remaining();
         int uSize = uBuffer.remaining();
         int vSize = vBuffer.remaining();
 
-        nv21 = new byte[ySize + uSize + vSize];
-
+        byte[] nv21 = new byte[ySize + uSize + vSize];
         yBuffer.get(nv21, 0, ySize);
         vBuffer.get(nv21, ySize, vSize);
         uBuffer.get(nv21, ySize + vSize, uSize);
 
-        Mat yuv = new Mat(img.getHeight() + img.getHeight()/2, img.getWidth(), CvType.CV_8UC1);
+        Mat yuv = new Mat(originalImage.getHeight() + originalImage.getHeight()/2, originalImage.getWidth(), CvType.CV_8UC1);
         yuv.put(0, 0, nv21);
         Mat rgb = new Mat();
         Imgproc.cvtColor(yuv, rgb, Imgproc.COLOR_YUV2RGB_NV21, 3);
-        //Core.rotate(rgb, rgb, Core.ROTATE_90_CLOCKWISE);
 
-        return  rgb;
+        return rgb;
     }
 
     /*
@@ -100,9 +100,9 @@ public class ImageProcessor {
         Mat gray = new Mat();
         Imgproc.cvtColor(matrix, gray, Imgproc.COLOR_BGR2GRAY);
 
-        Imgproc.morphologyEx(gray, gray, 2, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5,5)));
+        //Imgproc.morphologyEx(gray, gray, 2, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5,5)));
 
-        Imgproc.threshold(gray, gray, 127, 255, Imgproc.THRESH_OTSU);
+        //Imgproc.threshold(gray, gray, 127, 255, Imgproc.THRESH_OTSU);
 
         Imgproc.medianBlur(gray, gray, 5);
 
@@ -126,17 +126,19 @@ public class ImageProcessor {
 
     public static ArrayList<Point> getCircles(Mat imageMatrix, Rect boundary) {
 
-        Mat ROI = imageMatrix.submat(boundary);
+        Mat ROI = new Mat(imageMatrix, boundary);
         Mat gray = new Mat();
-        Imgproc.cvtColor(ROI, gray, Imgproc.COLOR_BGR2GRAY);
-        Imgproc.morphologyEx(gray, gray, 2, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5,5)));
 
-        Imgproc.adaptiveThreshold(gray, gray, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 15, 40);
-        //Imgproc.medianBlur(gray, gray, 5);
+        Imgproc.cvtColor(ROI, gray, Imgproc.COLOR_BGR2GRAY);
+
+        Imgproc.medianBlur(gray, gray, 5);
+
+        //Imgproc.morphologyEx(gray, gray, 2, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5,5)));
+
+        //Imgproc.adaptiveThreshold(gray, gray, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 15, 40);
+
         Mat circles = new Mat();
-        Imgproc.HoughCircles(gray, circles, Imgproc.HOUGH_GRADIENT, 1.0,
-                (double) gray.rows()/16,
-                100.0, 30.0, 1, 30);
+        Imgproc.HoughCircles(gray, circles, Imgproc.HOUGH_GRADIENT, 1.0, (double) gray.rows()/20, 100.0, 30.0, 0, 0);
 
         ArrayList<Point> circleCenterPoints = new ArrayList<>();
         for (int i = 0; i < circles.cols(); i++) {
@@ -154,29 +156,32 @@ public class ImageProcessor {
 
 
     public static void processImage(Mat originalImage, Rect faceBoundingBox) {
-        Mat greyscaledImage = new Mat();
-        Imgproc.cvtColor(originalImage, greyscaledImage, Imgproc.COLOR_BGR2GRAY);
-        Mat face = greyscaledImage.submat(faceBoundingBox);
+        System.out.println("Face bounding box: " + faceBoundingBox.toString());
+
+        Mat greyImage = new Mat();
+        Imgproc.cvtColor(originalImage, greyImage, Imgproc.COLOR_BGR2GRAY);
+        Mat greyFace = new Mat(greyImage, faceBoundingBox);
 
         MatOfRect eyes = new MatOfRect();
-        CascadeClassifier eyeCascade = new CascadeClassifier("haarcascade_eye.xml");
-        eyeCascade.detectMultiScale(face, eyes);
+        eyeCascade.detectMultiScale(greyFace, eyes, 1.05, 5);
         Rect[] eyeBoundingBoxes = eyes.toArray();
+        System.out.println("Number of eyes detected: " + eyeBoundingBoxes.length);
 
         SimpleBlobDetector_Params parameters = new SimpleBlobDetector_Params();
         parameters.set_filterByArea(true);
         SimpleBlobDetector detector = SimpleBlobDetector.create(parameters);
 
         for (int i = 0; i < eyeBoundingBoxes.length; i++) {
-            Mat eye = greyscaledImage.submat(eyeBoundingBoxes[i]);
-            Mat binarizedEye = new Mat();
-            Imgproc.adaptiveThreshold(eye, binarizedEye, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 11, 12);
+            System.out.println("Potential eye bounding box: " + eyeBoundingBoxes[i].toString());
+            Mat greyEye = new Mat(greyImage, eyeBoundingBoxes[i]);
+            Mat binaryEye = new Mat();
+            Imgproc.adaptiveThreshold(greyEye, binaryEye, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 11, 12);
             MatOfKeyPoint keyPoints = new MatOfKeyPoint();
-            detector.detect(binarizedEye, keyPoints);
+            detector.detect(binaryEye, keyPoints);
 
             KeyPoint[] keyPointsArray = keyPoints.toArray();
             for (int j = 0; j < keyPointsArray.length; j++) {
-                System.out.println(keyPointsArray[j].pt.toString());
+                System.out.println("Keypoint: " + keyPointsArray[j].pt.toString());
             }
         }
     }

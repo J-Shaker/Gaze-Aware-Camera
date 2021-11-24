@@ -17,6 +17,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.media.Image;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -36,6 +37,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageCapture;
+import androidx.camera.core.ImageCaptureException;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
@@ -54,6 +56,7 @@ import com.google.mlkit.vision.face.FaceDetector;
 import com.google.mlkit.vision.face.FaceDetectorOptions;
 
 import org.opencv.android.OpenCVLoader;
+import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.objdetect.CascadeClassifier;
@@ -75,8 +78,8 @@ public class MainActivity extends AppCompatActivity {
     public static final String FILE_NAME_FORMAT = "IMG ";
     public static final String FILE_TYPE = ".jpg";
 
-    public static final int PIXEL_COUNT_HORIZONTAL = 1280;
-    public static final int PIXEL_COUNT_VERTICAL = 720;
+    public static final int PIXEL_COUNT_HORIZONTAL = 1920;
+    public static final int PIXEL_COUNT_VERTICAL = 1080;
 
     public static int desiredNumberOfSubjects = 1;
 
@@ -98,6 +101,8 @@ public class MainActivity extends AppCompatActivity {
     private Executor cameraExecutor;
     private ImageCapture imageCapture;
 
+    public static CascadeClassifier eyeCascade;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -113,37 +118,8 @@ public class MainActivity extends AppCompatActivity {
         startCamera();
         setOnClickListeners();
         OpenCVLoader.initDebug();
+        openResourceFile();
     }
-
-//    private void openResourceFile() {
-//        try {
-//            InputStream inputStream = getResources().openRawResource(R.raw.haarcascade_eye);
-//            //File cascadeDir = getDir("cascade", Context.MODE_PRIVATE);
-//            cascadeFile = new File("haarcascade_eye.xml");
-//            FileOutputStream outputStream = new FileOutputStream(cascadeFile);
-//
-//            byte[] buffer = new byte[4096];
-//            int bytesRead;
-//            while ((bytesRead = inputStream.read(buffer)) != -1) {
-//                outputStream.write(buffer, 0, bytesRead);
-//            }
-//            inputStream.close();
-//            outputStream.close();
-//
-//            eyeCascade = new CascadeClassifier(cascadeFile.getAbsolutePath());
-//            if (eyeCascade.empty()) {
-//                Log.e(TAG, "Failed to load cascade classifier");
-//                eyeCascade = null;
-//            } else
-//                Log.i(TAG, "Loaded cascade classifier from " + cascadeFile.getAbsolutePath());
-//
-//            //cascadeDir.delete();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//            Log.e(TAG, "Failed to load cascade. Exception thrown: " + e);
-//        }
-//
-//    }
 
     private void getPermissionToUseCamera() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
@@ -181,9 +157,9 @@ public class MainActivity extends AppCompatActivity {
          * completed in their own methods.
          */
         cameraProvider.unbindAll();
-        bindPreviewUseCase();
-        bindCaptureUseCase();
         bindAnalysisUseCase();
+        //bindCaptureUseCase();
+        bindPreviewUseCase();
     }
 
     private void bindPreviewUseCase() {
@@ -305,13 +281,17 @@ public class MainActivity extends AppCompatActivity {
                                      * looking toward the camera is to instantiate a Mat that
                                      * OpenCV can use for further processing.
                                      */
-                                    Mat imageMatrix = ImageProcessor.convertYUVtoMat(mediaImage);
+                                    Bitmap bitmap = previewView.getBitmap();
+                                    Mat imageMatrix = new Mat();
+                                    Utils.bitmapToMat(bitmap, imageMatrix);
+
+                                    //Mat imageMatrix = ImageProcessor.convertYUVtoMat(mediaImage);
                                     /*
                                      * Now that we have our image in the form of a Mat object,
                                      * we can obtain the centers of the pupils for each face in
                                      * the image.
                                      */
-                                    //ArrayList<Point> pupilCenterCoordinates = ImageProcessor.getListOfAllCircleCenterPoints(imageMatrix);
+                                    //ArrayList<Point> pupilCenterCoordinates = ImageProcessor.getCircles(imageMatrix);
                                     //for (int i = 0; i < pupilCenterCoordinates.size(); i++) {
                                     //    System.out.println(pupilCenterCoordinates.get(i).toString());
                                     //}
@@ -328,7 +308,7 @@ public class MainActivity extends AppCompatActivity {
                                      * FaceDetector.
                                      */
                                     if (numberOfFacesDetected == numberOfGazesDetected) {
-                                        capturePhoto();
+                                        //capturePhoto();
                                     }
                                 }
                                 /*
@@ -442,17 +422,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void capturePhoto() {
-//        ImageCapture.OutputFileOptions outputFileOptions = new ImageCapture.OutputFileOptions.Builder(getPhotoPath()).build();
-//        imageCapture.takePicture(outputFileOptions, cameraExecutor, new ImageCapture.OnImageSavedCallback() {
-//                @Override
-//                public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
-//                    Toast.makeText(MainActivity.this, MESSAGE_PHOTO_SAVED, Toast.LENGTH_SHORT).show();
-//                }
-//                @Override
-//                public void onError(@NonNull ImageCaptureException error) {
-//                    Toast.makeText(MainActivity.this, MESSAGE_PHOTO_SAVE_FAILED, Toast.LENGTH_SHORT).show();
-//                }
-//            });
+        ImageCapture.OutputFileOptions outputFileOptions = new ImageCapture.OutputFileOptions.Builder(getPhotoPath()).build();
+        imageCapture.takePicture(outputFileOptions, cameraExecutor, new ImageCapture.OnImageSavedCallback() {
+                @Override
+                public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
+                    Toast.makeText(MainActivity.this, MESSAGE_PHOTO_SAVED, Toast.LENGTH_SHORT).show();
+                }
+                @Override
+                public void onError(@NonNull ImageCaptureException error) {
+                    Toast.makeText(MainActivity.this, MESSAGE_PHOTO_SAVE_FAILED, Toast.LENGTH_SHORT).show();
+                }
+            });
     }
 
     public void openSelection() {
@@ -466,6 +446,43 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         selectionMenu.show();
+    }
+
+    private File getPhotoPath() {
+        return null;
+    }
+
+
+
+    private void openResourceFile() {
+        try {
+            InputStream inputStream = getResources().openRawResource(R.raw.haarcascade_eye);
+            File cascadeDirectory = getDir("cascades", Context.MODE_PRIVATE);
+            File cascadeFile = new File(cascadeDirectory, "haarcascade_eye.xml");
+            FileOutputStream outputStream = new FileOutputStream(cascadeFile);
+
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
+            inputStream.close();
+            outputStream.close();
+
+            eyeCascade = new CascadeClassifier(cascadeFile.getAbsolutePath());
+            eyeCascade.load(cascadeFile.getAbsolutePath());
+            if (eyeCascade.empty()) {
+                Log.e(TAG, "Failed to load cascade classifier");
+                eyeCascade = null;
+            } else
+                Log.i(TAG, "Loaded cascade classifier from " + cascadeFile.getAbsolutePath());
+
+            // cascadeDirectory.delete();
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.e(TAG, "Failed to load cascade. Exception thrown: " + e);
+        }
+
     }
 
 
