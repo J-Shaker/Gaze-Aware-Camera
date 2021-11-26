@@ -176,6 +176,9 @@ public class ImageProcessor {
             Mat greyEye = new Mat(greyImage, eyeBoundingBoxes[i]);
             Mat binaryEye = new Mat();
             Imgproc.adaptiveThreshold(greyEye, binaryEye, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 11, 12);
+            // Imgproc.erode(binaryEye, binaryEye, );
+            // dilate
+            // median blur
             MatOfKeyPoint keyPoints = new MatOfKeyPoint();
             detector.detect(binaryEye, keyPoints);
 
