@@ -175,10 +175,17 @@ public class ImageProcessor {
             System.out.println("Potential eye bounding box: " + eyeBoundingBoxes[i].toString());
             Mat greyEye = new Mat(greyImage, eyeBoundingBoxes[i]);
             Mat binaryEye = new Mat();
+
+            // elements used for erode & dilation kernel. values used from https://www.tutorialspoint.com/java_dip/eroding_dilating.htm
+            int erosion_size = 5;
+            int dilation_size = 5;
+            Mat erodeElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2*erosion_size + 1, 2 * erosion_size + 1));
+            Mat dilationElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2*dilation_size + 1, 2*dilation_size+1));
+
             Imgproc.adaptiveThreshold(greyEye, binaryEye, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 11, 12);
-            // Imgproc.erode(binaryEye, binaryEye, );
-            // dilate
-            // median blur
+            Imgproc.erode(binaryEye, binaryEye, erodeElement);
+            Imgproc.dilate(binaryEye, binaryEye, dilationElement);
+            Imgproc.medianBlur(binaryEye, binaryEye, 5);
             MatOfKeyPoint keyPoints = new MatOfKeyPoint();
             detector.detect(binaryEye, keyPoints);
 
