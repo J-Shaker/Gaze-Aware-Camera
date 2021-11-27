@@ -267,6 +267,11 @@ public class GazeDetector {
                 break;
             }
 
+            if ((faceBoundingBoxAsOpenCVRect.x + faceBoundingBoxAsOpenCVRect.width > MainActivity.PIXEL_COUNT_VERTICAL) ||
+                    (faceBoundingBoxAsOpenCVRect.y + faceBoundingBoxAsOpenCVRect.height > MainActivity.PIXEL_COUNT_HORIZONTAL)) {
+                break;
+            }
+
             Point leftEyeCoordinate = new Point(leftEye.getPosition().x, leftEye.getPosition().y);
             Point rightEyeCoordinate = new Point(rightEye.getPosition().x, rightEye.getPosition().y);
 
