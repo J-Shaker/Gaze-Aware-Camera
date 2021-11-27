@@ -15,15 +15,19 @@ import static com.example.gazeawarecamera.MainActivity.eyeCascade;
 
 import android.graphics.PointF;
 import android.graphics.Rect;
+import android.media.Image;
 
 import androidx.annotation.NonNull;
 
 import com.google.mlkit.vision.face.Face;
 import com.google.mlkit.vision.face.FaceLandmark;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opencv.core.Core;
+import org.opencv.core.CvType;
 import org.opencv.core.KeyPoint;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfKeyPoint;
@@ -140,9 +144,33 @@ public class GazeDetector {
         }
     }
 
+    private Mat convertYUVtoMat(@NonNull Image img) {
+        byte[] nv21;
 
-    public void processImage(Mat originalImage, org.opencv.core.Rect faceBoundingBox, Point rightEye, Point leftEye) {
-        System.out.println("Face bounding box: " + faceBoundingBox.toString());
+        ByteBuffer yBuffer = img.getPlanes()[0].getBuffer();
+        ByteBuffer uBuffer = img.getPlanes()[1].getBuffer();
+        ByteBuffer vBuffer = img.getPlanes()[2].getBuffer();
+
+        int ySize = yBuffer.remaining();
+        int uSize = uBuffer.remaining();
+        int vSize = vBuffer.remaining();
+
+        nv21 = new byte[ySize + uSize + vSize];
+
+        yBuffer.get(nv21, 0, ySize);
+        vBuffer.get(nv21, ySize, vSize);
+        uBuffer.get(nv21, ySize + vSize, uSize);
+
+        Mat yuv = new Mat(img.getHeight() + img.getHeight()/2, img.getWidth(), CvType.CV_8UC1);
+        yuv.put(0, 0, nv21);
+        Mat rgb = new Mat();
+        Imgproc.cvtColor(yuv, rgb, Imgproc.COLOR_YUV2RGB_NV21, 3);
+        Core.rotate(rgb, rgb, Core.ROTATE_90_CLOCKWISE);
+        return  rgb;
+    }
+
+
+    public void processImage(Mat originalImage, org.opencv.core.Rect faceBoundingBox) {
 
         Mat greyImage = new Mat();
         Imgproc.cvtColor(originalImage, greyImage, Imgproc.COLOR_BGR2GRAY);
@@ -151,18 +179,12 @@ public class GazeDetector {
         MatOfRect eyes = new MatOfRect();
         eyeCascade.detectMultiScale(greyFace, eyes, 1.05, 5);
         org.opencv.core.Rect[] eyeBoundingBoxes = eyes.toArray();
-        System.out.println("Number of eyes detected: " + eyeBoundingBoxes.length);
 
         SimpleBlobDetector_Params parameters = new SimpleBlobDetector_Params();
         parameters.set_filterByArea(true);
         SimpleBlobDetector detector = SimpleBlobDetector.create(parameters);
 
         for (int i = 0; i < eyeBoundingBoxes.length; i++) {
-            System.out.println("Potential eye bounding box: " + eyeBoundingBoxes[i].toString());
-
-            System.out.println("Left eye is in this box: " + eyeBoundingBoxes[i].contains(leftEye));
-            System.out.println("Right eye is in this box: " + eyeBoundingBoxes[i].contains(rightEye));
-
             drawingListener.drawRectangle((Rect) changeRect(eyeBoundingBoxes[i]));
 
             Mat greyEye = new Mat(greyImage, eyeBoundingBoxes[i]);
@@ -278,10 +300,10 @@ public class GazeDetector {
              * If so, it will be impossible to determine the gaze of the face and therefore in this
              * case we will terminate the loop.
              */
-            FaceLandmark leftEye = faces.get(i).getLandmark(FaceLandmark.RIGHT_EYE); // Note that the right eye is the viewer's left
-            FaceLandmark rightEye = faces.get(i).getLandmark(FaceLandmark.LEFT_EYE); // Note that the left eye is the viewer's right
-            FaceLandmark leftEar = faces.get(i).getLandmark(FaceLandmark.RIGHT_EAR); // Note that the right ear is the viewer's left
-            FaceLandmark rightEar = faces.get(i).getLandmark(FaceLandmark.LEFT_EAR); // Note that the left ear is the viewer's right
+            FaceLandmark leftEye = faces.get(i).getLandmark(FaceLandmark.LEFT_EYE);
+            FaceLandmark rightEye = faces.get(i).getLandmark(FaceLandmark.RIGHT_EYE);
+            FaceLandmark leftEar = faces.get(i).getLandmark(FaceLandmark.LEFT_EAR);
+            FaceLandmark rightEar = faces.get(i).getLandmark(FaceLandmark.RIGHT_EAR);
             FaceLandmark nose = faces.get(i).getLandmark(FaceLandmark.NOSE_BASE);
             if (leftEye == null || rightEye == null || leftEar == null || rightEar == null || nose == null) {
                 break;
@@ -307,7 +329,7 @@ public class GazeDetector {
              *
              *
              */
-            double angleFromLeftPupilToEyeCenter = Geometry.computeAngleBetweenTwoPoints(rightEye.getPosition(), leftPupilCenterCoordinates);
+            double angleFromLeftPupilToEyeCenter = Geometry.computeAngleBetweenTwoPoints(leftEye.getPosition(), leftPupilCenterCoordinates);
             double angleFromRightPupilToEyeCenter = Geometry.computeAngleBetweenTwoPoints(rightEye.getPosition(), rightPupilCenterCoordinates);
 
             Direction leftPupilDirection = Direction.getDirection(angleFromLeftPupilToEyeCenter);
@@ -323,7 +345,7 @@ public class GazeDetector {
     }
 
 
-    public int detectGazesWithLandmarks(@NonNull List<Face> faces, Mat imageMatrix) {
+    public int detectGazesWithLandmarks(@NonNull List<Face> faces, Image image) {
         /*
          * We assume that there is no one looking toward the camera at first.
          */
@@ -347,10 +369,10 @@ public class GazeDetector {
             /*
              * This portion of the algorithm is the same as detectGazesWithAngles.
              */
-            FaceLandmark leftEye = faces.get(i).getLandmark(FaceLandmark.RIGHT_EYE); // Note that the right eye is the viewer's left
-            FaceLandmark rightEye = faces.get(i).getLandmark(FaceLandmark.LEFT_EYE); // Note that the left eye is the viewer's right
-            FaceLandmark leftEar = faces.get(i).getLandmark(FaceLandmark.RIGHT_EAR); // Note that the right ear is the viewer's left
-            FaceLandmark rightEar = faces.get(i).getLandmark(FaceLandmark.LEFT_EAR); // Note that the left ear is the viewer's right
+            FaceLandmark leftEye = faces.get(i).getLandmark(FaceLandmark.LEFT_EYE);
+            FaceLandmark rightEye = faces.get(i).getLandmark(FaceLandmark.RIGHT_EYE);
+            FaceLandmark leftEar = faces.get(i).getLandmark(FaceLandmark.LEFT_EAR);
+            FaceLandmark rightEar = faces.get(i).getLandmark(FaceLandmark.RIGHT_EAR);
             FaceLandmark nose = faces.get(i).getLandmark(FaceLandmark.NOSE_BASE);
             if (leftEye == null || rightEye == null || leftEar == null || rightEar == null || nose == null) {
                 break;
@@ -359,6 +381,8 @@ public class GazeDetector {
             android.graphics.Rect faceBoundingBoxFromMLKit = faces.get(i).getBoundingBox();
 
             drawingListener.drawRectangle(faceBoundingBoxFromMLKit);
+
+            Mat imageMatrix = convertYUVtoMat(image);
 
             org.opencv.core.Rect faceBoundingBoxAsOpenCVRect = (org.opencv.core.Rect) ImageProcessor.changeRect(faceBoundingBoxFromMLKit);
             if (faceBoundingBoxAsOpenCVRect == null) {
@@ -373,7 +397,7 @@ public class GazeDetector {
             Point leftEyeCoordinate = new Point(leftEye.getPosition().x, leftEye.getPosition().y);
             Point rightEyeCoordinate = new Point(rightEye.getPosition().x, rightEye.getPosition().y);
 
-            processImage(imageMatrix, faceBoundingBoxAsOpenCVRect, leftEyeCoordinate, rightEyeCoordinate);
+            processImage(imageMatrix, faceBoundingBoxAsOpenCVRect);
 
 
             //ArrayList<Point> potentialLeftPupils = ImageProcessor.getCircles(imageMatrix, leftRectangle);
