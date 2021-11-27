@@ -14,6 +14,8 @@ package com.example.gazeawarecamera;
 import static com.example.gazeawarecamera.MainActivity.eyeCascade;
 
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.ImageFormat;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.media.Image;
@@ -109,7 +111,7 @@ public class GazeDetector {
         }
     }
 
-    public Object changeRect(Object rectangle) {
+    private Object changeRect(Object rectangle) {
         /*
          * A method that converts from Android Graphics Rect to OpenCV Core Rect. These classes
          * represent the same thing, but we often need to switch between them. If an object is
@@ -146,37 +148,19 @@ public class GazeDetector {
         }
     }
 
-    private Mat convertYUVtoMat(@NonNull Image img) {
-
-        byte[] nv21;
-
-        ByteBuffer yBuffer = img.getPlanes()[0].getBuffer();
-        ByteBuffer uBuffer = img.getPlanes()[1].getBuffer();
-        ByteBuffer vBuffer = img.getPlanes()[2].getBuffer();
-
-        int ySize = yBuffer.remaining();
-        int uSize = uBuffer.remaining();
-        int vSize = vBuffer.remaining();
-
-        nv21 = new byte[ySize + uSize + vSize];
-
-        yBuffer.get(nv21, 0, ySize);
-        vBuffer.get(nv21, ySize, vSize);
-        uBuffer.get(nv21, ySize + vSize, uSize);
-
-        Mat yuv = new Mat(img.getHeight() + img.getHeight()/2, img.getWidth(), CvType.CV_8UC1);
-        yuv.put(0, 0, nv21);
-        Mat rgb = new Mat();
-        Imgproc.cvtColor(yuv, rgb, Imgproc.COLOR_YUV2RGB_NV21, 3);
-        Core.rotate(rgb, rgb, Core.ROTATE_90_CLOCKWISE);
-        return  rgb;
+    private Mat imageToGreyMatrix(Image image) {
+        Image.Plane[] planes = image.getPlanes();
+        int w = image.getWidth();
+        int h = image.getHeight();
+        assert(planes[0].getPixelStride() == 1);
+        ByteBuffer y_plane = planes[0].getBuffer();
+        int y_plane_step = planes[0].getRowStride();
+        return new Mat(h, w, CvType.CV_8UC1, y_plane, y_plane_step);
     }
 
 
-    public void processImage(Mat originalImage, org.opencv.core.Rect faceBoundingBox) {
+    public void processImage(Mat greyImage, org.opencv.core.Rect faceBoundingBox) {
 
-        Mat greyImage = new Mat();
-        Imgproc.cvtColor(originalImage, greyImage, Imgproc.COLOR_BGR2GRAY);
         Mat greyFace = new Mat(greyImage, faceBoundingBox);
 
         // debugging
@@ -393,7 +377,7 @@ public class GazeDetector {
 
             drawingListener.drawRectangle(faceBoundingBoxFromMLKit);
 
-            Mat imageMatrix = convertYUVtoMat(image);
+            Mat imageMatrix = imageToGreyMatrix(image);
 
             org.opencv.core.Rect faceBoundingBoxAsOpenCVRect = (org.opencv.core.Rect) ImageProcessor.changeRect(faceBoundingBoxFromMLKit);
             if (faceBoundingBoxAsOpenCVRect == null) {
