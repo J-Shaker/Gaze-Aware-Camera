@@ -109,7 +109,6 @@ public class MainActivity extends AppCompatActivity implements DrawingListener {
 
     public static CascadeClassifier eyeCascade;
 
-    private final ImageProcessor imageProcessor = new ImageProcessor(this);
     private final GazeDetector gazeDetector = new GazeDetector(this);
 
     @Override
