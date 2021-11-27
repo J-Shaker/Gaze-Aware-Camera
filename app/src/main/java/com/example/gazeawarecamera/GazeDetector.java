@@ -145,6 +145,7 @@ public class GazeDetector {
     }
 
     private Mat convertYUVtoMat(@NonNull Image img) {
+
         byte[] nv21;
 
         ByteBuffer yBuffer = img.getPlanes()[0].getBuffer();
@@ -343,7 +344,6 @@ public class GazeDetector {
         }
         return numberOfFacesLookingTowardCamera;
     }
-    //
 
 
     public int detectGazesWithLandmarks(@NonNull List<Face> faces, Image image) {
