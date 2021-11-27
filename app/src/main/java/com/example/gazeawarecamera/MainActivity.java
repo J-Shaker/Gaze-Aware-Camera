@@ -287,14 +287,6 @@ public class MainActivity extends AppCompatActivity implements DrawingListener {
                                  */
                                 if (numberOfFacesDetected >= desiredNumberOfSubjects) {
                                     /*
-                                     * The first step toward determining whether each subject is
-                                     * looking toward the camera is to instantiate a Mat that
-                                     * OpenCV can use for further processing.
-                                     */
-                                    //Bitmap bitmap = previewView.getBitmap();
-                                    //Mat imageMatrix = new Mat();
-                                    //Utils.bitmapToMat(bitmap, imageMatrix);
-                                    /*
                                      * Now, we call the detectGazes method of GazeDetector to
                                      * determine the number of faces which are looking toward the
                                      * camera and update the value of
@@ -502,15 +494,17 @@ public class MainActivity extends AppCompatActivity implements DrawingListener {
      */
 
     @Override
-    public void drawRectangle(Rect rectangle) {
+    public void drawRectangles(ArrayList<Rect> rectangles) {
         Bitmap bitmap = Bitmap.createBitmap(getScreenWidth(), getScreenHeight(), Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
         Paint paint = new Paint();
         paint.setStyle(Paint.Style.STROKE);
         paint.setColor(Color.YELLOW);
-        paint.setStrokeWidth(15);
+        paint.setStrokeWidth(8);
         paint.setAntiAlias(true);
-        canvas.drawRect(rectangle, paint);
+        for (int i = 0; i < rectangles.size(); i++) {
+            canvas.drawRect(rectangles.get(i), paint);
+        }
         imageView.setImageBitmap(bitmap);
     }
 }

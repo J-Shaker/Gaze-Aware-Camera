@@ -133,15 +133,13 @@ public class GazeDetector {
         } else if (rectangle instanceof android.graphics.Rect) {
             /*
              * The OpenCV Core Rect constructor also has four arguments. They are x, y, width, and
-             * height. The x and y arguments represent the top left corner of the rectangle. The
-             * Android Rect does not give us direct access to any of the corners of the rectangles,
-             * but it does give us the center x and y coordinates from which we can easily find the
-             * corners using width and height.
+             * height. The x and y arguments represent the top left corner of the rectangle. All
+             * values can be obtained from the OpenCV Rect object.
              */
             int width = ((android.graphics.Rect) rectangle).width();
             int height = ((android.graphics.Rect) rectangle).height();
-            int x = ((android.graphics.Rect) rectangle).centerX() - (width / 2);
-            int y = ((android.graphics.Rect) rectangle).centerY() - (height / 2);
+            int x = ((android.graphics.Rect) rectangle).left;
+            int y = ((android.graphics.Rect) rectangle).top;
             return new org.opencv.core.Rect(x, y, width, height);
         } else {
             return null;
@@ -149,6 +147,9 @@ public class GazeDetector {
     }
 
     private Mat imageToGreyMatrix(Image image) {
+        /*
+         * https://github.com/opencv/opencv/blob/master/modules/java/generator/android-21/java/org/opencv/android/JavaCamera2View.java
+         */
         Image.Plane[] planes = image.getPlanes();
         int w = image.getWidth();
         int h = image.getHeight();
@@ -159,9 +160,12 @@ public class GazeDetector {
     }
 
 
-    public void processImage(Mat greyImage, org.opencv.core.Rect faceBoundingBox) {
+    public void processImage(Mat greyImage, Rect faceBoundingBox) {
 
-        Mat greyFace = new Mat(greyImage, faceBoundingBox);
+        ArrayList<Rect> rectangles = new ArrayList<Rect>();
+        rectangles.add(faceBoundingBox);
+
+        Mat greyFace = new Mat(greyImage, (org.opencv.core.Rect) changeRect(faceBoundingBox));
 
         // debugging
 //        Bitmap bmpGrey = null;
@@ -180,24 +184,40 @@ public class GazeDetector {
         SimpleBlobDetector detector = SimpleBlobDetector.create(parameters);
 
         for (int i = 0; i < eyeBoundingBoxes.length; i++) {
-            drawingListener.drawRectangle((Rect) changeRect(eyeBoundingBoxes[i]));
 
-            Mat greyEye = new Mat(greyImage, eyeBoundingBoxes[i]);
+            rectangles.add((android.graphics.Rect) changeRect(eyeBoundingBoxes[i]));
+            System.out.println(eyeBoundingBoxes[i].toString());
+
+            //drawingListener.drawRectangle((Rect) changeRect(eyeBoundingBoxes[i]));
+
+            Mat greyEye = new Mat(greyFace, eyeBoundingBoxes[i]);
+
             Mat binaryEye = new Mat();
 
             // elements used for erode & dilation kernel. values used from https://www.tutorialspoint.com/java_dip/eroding_dilating.htm
-            int erosion_size = 5;
-            int dilation_size = 5;
+            int erosion_size = 2;
+            int dilation_size = 2;
             Point defAnchor = new Point(-1,-1);
             Mat erodeElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2 * erosion_size + 1, 2 * erosion_size + 1));
             Mat dilationElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2 * dilation_size + 1, 2 * dilation_size + 1));
 
-            Imgproc.adaptiveThreshold(greyEye, binaryEye, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 11, 10);
-            Imgproc.erode(binaryEye, binaryEye, erodeElement, defAnchor, 2);
-            Imgproc.dilate(binaryEye, binaryEye, dilationElement, defAnchor, 4);
+            Bitmap bmpEye = null;
+            bmpEye = Bitmap.createBitmap(greyEye.cols(), greyEye.rows(), Bitmap.Config.ARGB_8888);
+            Utils.matToBitmap(greyEye, bmpEye);
+
+            Imgproc.adaptiveThreshold(greyEye, binaryEye, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 11, 2);
+            Imgproc.erode(binaryEye, binaryEye, erodeElement, defAnchor);
+            Imgproc.dilate(binaryEye, binaryEye, dilationElement, defAnchor);
             Imgproc.medianBlur(binaryEye, binaryEye, 5);
             MatOfKeyPoint keyPoints = new MatOfKeyPoint();
             detector.detect(binaryEye, keyPoints);
+
+
+            Bitmap bmpEyeAfterProcess = null;
+            bmpEyeAfterProcess = Bitmap.createBitmap(binaryEye.cols(), binaryEye.rows(), Bitmap.Config.ARGB_8888);
+            Utils.matToBitmap(binaryEye, bmpEyeAfterProcess);
+
+            drawingListener.drawRectangles(rectangles);
 
             KeyPoint[] keyPointsArray = keyPoints.toArray();
             for (int j = 0; j < keyPointsArray.length; j++) {
@@ -329,12 +349,6 @@ public class GazeDetector {
 
             Direction leftPupilDirection = Direction.getDirection(angleFromLeftPupilToEyeCenter);
             Direction rightPupilDirection = Direction.getDirection(angleFromRightPupilToEyeCenter);
-
-            double angleFromLeftEyeToPhotoCenter = Geometry.computeAngleBetweenTwoPoints(IMAGE_CENTER_POINT, leftEye.getPosition());
-            double angleFromRightEyeToPhotoCenter = Geometry.computeAngleBetweenTwoPoints(IMAGE_CENTER_POINT, rightEye.getPosition());
-
-            Direction leftEyeDirection = Direction.getDirection(angleFromLeftEyeToPhotoCenter);
-            Direction rightEyeDirection = Direction.getDirection(angleFromRightEyeToPhotoCenter);
         }
         return numberOfFacesLookingTowardCamera;
     }
@@ -373,16 +387,10 @@ public class GazeDetector {
                 break;
             }
 
-            android.graphics.Rect faceBoundingBoxFromMLKit = faces.get(i).getBoundingBox();
+            android.graphics.Rect faceBoundingBox = faces.get(i).getBoundingBox();
 
-            drawingListener.drawRectangle(faceBoundingBoxFromMLKit);
 
             Mat imageMatrix = imageToGreyMatrix(image);
-
-            org.opencv.core.Rect faceBoundingBoxAsOpenCVRect = (org.opencv.core.Rect) ImageProcessor.changeRect(faceBoundingBoxFromMLKit);
-            if (faceBoundingBoxAsOpenCVRect == null) {
-                break;
-            }
 
 //            if ((faceBoundingBoxAsOpenCVRect.x + faceBoundingBoxAsOpenCVRect.width > MainActivity.PIXEL_COUNT_VERTICAL) ||
 //                    (faceBoundingBoxAsOpenCVRect.y + faceBoundingBoxAsOpenCVRect.height > MainActivity.PIXEL_COUNT_HORIZONTAL)) {
@@ -392,7 +400,7 @@ public class GazeDetector {
             Point leftEyeCoordinate = new Point(leftEye.getPosition().x, leftEye.getPosition().y);
             Point rightEyeCoordinate = new Point(rightEye.getPosition().x, rightEye.getPosition().y);
 
-            processImage(imageMatrix, faceBoundingBoxAsOpenCVRect);
+            processImage(imageMatrix, faceBoundingBox);
 
 
             //ArrayList<Point> potentialLeftPupils = ImageProcessor.getCircles(imageMatrix, leftRectangle);

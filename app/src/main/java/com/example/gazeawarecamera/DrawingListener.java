@@ -2,8 +2,10 @@ package com.example.gazeawarecamera;
 
 import android.graphics.Rect;
 
+import java.util.ArrayList;
+
 public interface DrawingListener {
 
-    public void drawRectangle(Rect rectangle);
+    void drawRectangles(ArrayList<Rect> rectangles);
 
 }
