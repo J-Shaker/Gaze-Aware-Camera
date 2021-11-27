@@ -508,6 +508,7 @@ public class MainActivity extends AppCompatActivity implements DrawingListener {
         Paint paint = new Paint();
         paint.setStyle(Paint.Style.STROKE);
         paint.setColor(Color.YELLOW);
+        paint.setStrokeWidth(15);
         paint.setAntiAlias(true);
         canvas.drawRect(rectangle, paint);
         imageView.setImageBitmap(bitmap);

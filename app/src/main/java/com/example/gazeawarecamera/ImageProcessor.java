@@ -93,7 +93,7 @@ public class ImageProcessor {
     }
 
 
-    public static void processImage(Mat originalImage, Rect faceBoundingBox, Point rightEye, Point leftEye) {
+    public void processImage(Mat originalImage, Rect faceBoundingBox, Point rightEye, Point leftEye) {
         System.out.println("Face bounding box: " + faceBoundingBox.toString());
 
         Mat greyImage = new Mat();
@@ -114,6 +114,8 @@ public class ImageProcessor {
 
             System.out.println("Left eye is in this box: " + eyeBoundingBoxes[i].contains(leftEye));
             System.out.println("Right eye is in this box: " + eyeBoundingBoxes[i].contains(rightEye));
+
+            //drawingListener.drawRectangle(eyeBoundingBoxes[i]);
 
             Mat greyEye = new Mat(greyImage, eyeBoundingBoxes[i]);
             Mat binaryEye = new Mat();
