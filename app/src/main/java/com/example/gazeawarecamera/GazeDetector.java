@@ -37,6 +37,7 @@ import org.opencv.core.Mat;
 import org.opencv.core.MatOfKeyPoint;
 import org.opencv.core.MatOfRect;
 import org.opencv.core.Point;
+import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.features2d.SimpleBlobDetector;
 import org.opencv.features2d.SimpleBlobDetector_Params;
@@ -180,17 +181,21 @@ public class GazeDetector {
         org.opencv.core.Rect[] eyeBoundingBoxes = eyes.toArray();
 
         SimpleBlobDetector_Params parameters = new SimpleBlobDetector_Params();
-        parameters.set_filterByArea(true);
+        parameters.set_filterByCircularity(true);
+        parameters.set_minCircularity((float) 0.5);
+        parameters.set_maxCircularity((float) 1.0);
         SimpleBlobDetector detector = SimpleBlobDetector.create(parameters);
 
         for (int i = 0; i < eyeBoundingBoxes.length; i++) {
 
-            rectangles.add((android.graphics.Rect) changeRect(eyeBoundingBoxes[i]));
-            System.out.println(eyeBoundingBoxes[i].toString());
-
-            //drawingListener.drawRectangle((Rect) changeRect(eyeBoundingBoxes[i]));
+            rectangles.add((Rect) changeRect(eyeBoundingBoxes[i]));
 
             Mat greyEye = new Mat(greyFace, eyeBoundingBoxes[i]);
+            // Debugging
+            Bitmap bmpEye = null;
+            bmpEye = Bitmap.createBitmap(greyEye.cols(), greyEye.rows(), Bitmap.Config.ARGB_8888);
+            Utils.matToBitmap(greyEye, bmpEye);
+
 
             Mat binaryEye = new Mat();
 
@@ -201,10 +206,6 @@ public class GazeDetector {
             Mat erodeElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2 * erosion_size + 1, 2 * erosion_size + 1));
             Mat dilationElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2 * dilation_size + 1, 2 * dilation_size + 1));
 
-            Bitmap bmpEye = null;
-            bmpEye = Bitmap.createBitmap(greyEye.cols(), greyEye.rows(), Bitmap.Config.ARGB_8888);
-            Utils.matToBitmap(greyEye, bmpEye);
-
             Imgproc.adaptiveThreshold(greyEye, binaryEye, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 11, 2);
             Imgproc.erode(binaryEye, binaryEye, erodeElement, defAnchor);
             Imgproc.dilate(binaryEye, binaryEye, dilationElement, defAnchor);
@@ -213,9 +214,9 @@ public class GazeDetector {
             detector.detect(binaryEye, keyPoints);
 
 
-            Bitmap bmpEyeAfterProcess = null;
-            bmpEyeAfterProcess = Bitmap.createBitmap(binaryEye.cols(), binaryEye.rows(), Bitmap.Config.ARGB_8888);
-            Utils.matToBitmap(binaryEye, bmpEyeAfterProcess);
+            Bitmap bmpProcessedEye = null;
+            bmpProcessedEye = Bitmap.createBitmap(greyEye.cols(), greyEye.rows(), Bitmap.Config.ARGB_8888);
+            Utils.matToBitmap(greyEye, bmpProcessedEye);
 
             drawingListener.drawRectangles(rectangles);
 
@@ -223,6 +224,9 @@ public class GazeDetector {
             for (int j = 0; j < keyPointsArray.length; j++) {
                 System.out.println("Keypoint: " + keyPointsArray[j].pt.toString());
             }
+
+
+
         }
     }
 
