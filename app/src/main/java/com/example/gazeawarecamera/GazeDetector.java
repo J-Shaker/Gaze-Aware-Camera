@@ -258,6 +258,10 @@ public class GazeDetector {
                 break;
             }
 
+            if ((faceBoundingBoxAsOpenCVRect.x + faceBoundingBoxAsOpenCVRect.width > 1080) || (faceBoundingBoxAsOpenCVRect.y + faceBoundingBoxAsOpenCVRect.height > 1920)) {
+                break;
+            }
+
             Point leftEyeCoordinate = new Point(leftEye.getPosition().x, leftEye.getPosition().y);
             Point rightEyeCoordinate = new Point(rightEye.getPosition().x, rightEye.getPosition().y);
 
