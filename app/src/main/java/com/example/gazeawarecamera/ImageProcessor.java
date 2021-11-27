@@ -49,6 +49,12 @@ import java.util.ArrayList;
 
 public class ImageProcessor {
 
+    DrawingListener drawingListener;
+
+    public ImageProcessor(DrawingListener drawingListener) {
+        this.drawingListener = drawingListener;
+    }
+
     public static Object changeRect(Object rectangle) {
         /*
          * A method that converts from Android Graphics Rect to OpenCV Core Rect. These classes

@@ -78,7 +78,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements DrawingListener {
 
     public static final String FILE_SAVE_DIRECTORY = "Gaze Aware Camera Photos";
     public static final String FILE_NAME_FORMAT = "IMG ";
@@ -108,6 +108,9 @@ public class MainActivity extends AppCompatActivity {
     private ImageCapture imageCapture;
 
     public static CascadeClassifier eyeCascade;
+
+    private final ImageProcessor imageProcessor = new ImageProcessor(this);
+    private final GazeDetector gazeDetector = new GazeDetector(this);
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -297,7 +300,7 @@ public class MainActivity extends AppCompatActivity {
                                      * camera and update the value of
                                      * numberOfFacesLookingTowardCamera.
                                      */
-                                    numberOfGazesDetected = GazeDetector.detectGazesWithLandmarks(faces, imageMatrix);
+                                    numberOfGazesDetected = gazeDetector.detectGazesWithLandmarks(faces, imageMatrix);
                                     /*
                                      * We now verify if number of subjects looking toward the
                                      * camera is equivalent to the number of faces detected by
@@ -352,7 +355,7 @@ public class MainActivity extends AppCompatActivity {
         cameraProvider.bindToLifecycle(this, cameraSelector, imageAnalysis);
     }
 
-    /*
+    /* ---------------------------------------------------------------------------------------------
      * The next set of methods are responsible for functionality pertaining to the UI. This includes
      * updating the text on screen to adapt to changes in variables as well as setting the behavior
      * of buttons when clicked by the user.
@@ -372,6 +375,7 @@ public class MainActivity extends AppCompatActivity {
          */
         gazeCounter.setText(getString(R.string.gaze_counter, numberOfGazes));
     }
+
     /*
      * setOnClickListener is an object that allows us to tell the application what to do when a UI
      * element is pressed. We have three buttons and are setting each of their onClickListeners in
@@ -444,6 +448,9 @@ public class MainActivity extends AppCompatActivity {
         selectionMenu.show();
     }
 
+    /* ---------------------------------------------------------------------------------------------
+     */
+
     private File getPhotoPath() {
         return null;
     }
@@ -473,7 +480,7 @@ public class MainActivity extends AppCompatActivity {
             } else
                 Log.i(TAG, "Loaded cascade classifier from " + cascadeFile.getAbsolutePath());
 
-            // cascadeDirectory.delete();
+            cascadeDirectory.delete();
         } catch (IOException e) {
             e.printStackTrace();
             Log.e(TAG, "Failed to load cascade. Exception thrown: " + e);
@@ -494,20 +501,15 @@ public class MainActivity extends AppCompatActivity {
     /* ---------------------------------------------------------------------------------------------
      */
 
-//    public static void drawRectangles(Rect[] rectangles) {
-//        Bitmap bitmap = Bitmap.createBitmap(getScreenWidth(), getScreenHeight(), Bitmap.Config.ARGB_8888);
-//        Canvas canvas = new Canvas(bitmap);
-//        Paint paint = new Paint();
-//        paint.setStyle(Paint.Style.FILL);
-//        paint.setColor(Color.YELLOW);
-//        paint.setAntiAlias(true);
-//
-//        for (int i = 0; i < rectangles.length; i++) {
-//            canvas.drawRect(rectangles[i], paint);
-//        }
-//
-//        imageView.setImageBitmap(bitmap);
-//
-//    }
-
+    @Override
+    public void drawRectangle(Rect rectangle) {
+        Bitmap bitmap = Bitmap.createBitmap(getScreenWidth(), getScreenHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        Paint paint = new Paint();
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setColor(Color.YELLOW);
+        paint.setAntiAlias(true);
+        canvas.drawRect(rectangle, paint);
+        imageView.setImageBitmap(bitmap);
+    }
 }

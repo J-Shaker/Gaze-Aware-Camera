@@ -45,6 +45,12 @@ public class GazeDetector {
     private static final double HORIZONTAL_TOLERANCE = 20.0;
     private static final double VERTICAL_TOLERANCE = 20.0;
 
+    DrawingListener drawingListener;
+
+    public GazeDetector(DrawingListener drawingListener) {
+        this.drawingListener = drawingListener;
+    }
+
     /*
      * This enumeration allows us to classify the direction of a face's gaze. These classifications
      * will be given once the angle of the pupil relative to the center of the eye is determined.
@@ -219,7 +225,7 @@ public class GazeDetector {
     }
 
 
-    public static int detectGazesWithLandmarks(@NonNull List<Face> faces, Mat imageMatrix) {
+    public int detectGazesWithLandmarks(@NonNull List<Face> faces, Mat imageMatrix) {
         /*
          * We assume that there is no one looking toward the camera at first.
          */
@@ -253,6 +259,9 @@ public class GazeDetector {
             }
 
             android.graphics.Rect faceBoundingBoxFromMLKit = faces.get(i).getBoundingBox();
+
+            drawingListener.drawRectangle(faceBoundingBoxFromMLKit);
+
             org.opencv.core.Rect faceBoundingBoxAsOpenCVRect = (org.opencv.core.Rect) ImageProcessor.changeRect(faceBoundingBoxFromMLKit);
             if (faceBoundingBoxAsOpenCVRect == null) {
                 break;
