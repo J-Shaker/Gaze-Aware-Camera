@@ -49,113 +49,45 @@ import java.util.ArrayList;
 
 public class ImageProcessor {
 
-    /*
-     * Potential Solutions
-     * 1) Bounding the search area using a rectangle. We need to determine the size of the box. A
-     *    fixed size is limiting because it may not work if you are too close or too far from the
-     *    camera.
-     * 2) MSER algorithm - maybe in OpenCV?
-     * 3) Detect iris before detecting pupils. The iris is easier to locate and gives bounds for the
-     *    pupils which are guaranteed to be in the iris.
-     * 4) Making the hough circle algorithm incredibly sensitive to everything. GazeDetection
-     *    is already programmed to weed out points which are not the pupils. However, increasing the
-     *    sensitivity of this algorithm doesn't necessarily mean we will get the pupils. Also, we
-     *    aren't yet sure how this can be done.
-     */
-
-
-    public static Mat convertYUVtoMat(@NonNull Image originalImage) {
+    public static Object changeRect(Object rectangle) {
         /*
-         * https://stackoverflow.com/questions/58102717/android-camerax-analyzer-image-with-format-yuv-420-888-to-opencv-mat
+         * A method that converts from Android Graphics Rect to OpenCV Core Rect. These classes
+         * represent the same thing, but we often need to switch between them. If an object is
+         * passed in that is neither version of the Rect object, null will be returned.
          */
-        Image.Plane[] planes = originalImage.getPlanes();
-        ByteBuffer yBuffer = planes[0].getBuffer();
-        ByteBuffer uBuffer = planes[1].getBuffer();
-        ByteBuffer vBuffer = planes[2].getBuffer();
-
-        int ySize = yBuffer.remaining();
-        int uSize = uBuffer.remaining();
-        int vSize = vBuffer.remaining();
-
-        byte[] nv21 = new byte[ySize + uSize + vSize];
-        yBuffer.get(nv21, 0, ySize);
-        vBuffer.get(nv21, ySize, vSize);
-        uBuffer.get(nv21, ySize + vSize, uSize);
-
-        Mat yuv = new Mat(originalImage.getHeight() + originalImage.getHeight()/2, originalImage.getWidth(), CvType.CV_8UC1);
-        yuv.put(0, 0, nv21);
-        Mat rgb = new Mat();
-        Imgproc.cvtColor(yuv, rgb, Imgproc.COLOR_YUV2RGB_NV21, 3);
-
-        return rgb;
-    }
-
-    /*
-     * https://docs.opencv.org/3.4/d4/d70/tutorial_hough_circle.html
-     */
-    public static ArrayList<Point> getListOfAllCircleCenterPoints(Mat matrix) {
-        /*
-         *
-         */
-        Mat gray = new Mat();
-        Imgproc.cvtColor(matrix, gray, Imgproc.COLOR_BGR2GRAY);
-
-        //Imgproc.morphologyEx(gray, gray, 2, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5,5)));
-
-        //Imgproc.threshold(gray, gray, 127, 255, Imgproc.THRESH_OTSU);
-
-        Imgproc.medianBlur(gray, gray, 5);
-
-        Mat circles = new Mat();
-        Imgproc.HoughCircles(gray, circles, Imgproc.HOUGH_GRADIENT, 1.0,
-                (double) gray.rows()/16, // change this value to detect circles with different distances to each other
-                100.0, 30.0, 1, 30); // change the last two parameters
-        // (min_radius & max_radius) to detect larger circles
-
-        ArrayList<Point> pupilCenterCoordinates = new ArrayList<>();
-        for (int i = 0; i < circles.cols(); i++) {
-            double[] c = circles.get(0, i);
-            Point center = new Point(Math.round(c[0]), Math.round(c[1]));
-            pupilCenterCoordinates.add(center);
+        if (rectangle instanceof org.opencv.core.Rect) {
+            /*
+             * The Android Graphics Rect constructor has four arguments. They are left, top, right,
+             * and bottom. The left and top values represent the x and y coordinates represent the
+             * top left corner of the rectangle, while the right and bottom values represent the
+             * bottom right corner of the rectangle. We obtain left and top directly from the
+             * OpenCV Rect, and add width and height to those values to obtain bottom and right.
+             */
+            int left = ((Rect) rectangle).x;
+            int top = ((Rect) rectangle).y;
+            int right = ((Rect) rectangle).x + ((Rect) rectangle).width;
+            int bottom = ((Rect) rectangle).y + ((Rect) rectangle).height;
+            return new android.graphics.Rect(left, top, right, bottom);
+        } else if (rectangle instanceof android.graphics.Rect) {
+            /*
+             * The OpenCV Core Rect constructor also has four arguments. They are x, y, width, and
+             * height. The x and y arguments represent the top left corner of the rectangle. The
+             * Android Rect does not give us direct access to any of the corners of the rectangles,
+             * but it does give us the center x and y coordinates from which we can easily find the
+             * corners using width and height.
+             */
+            int width = ((android.graphics.Rect) rectangle).width();
+            int height = ((android.graphics.Rect) rectangle).height();
+            int x = ((android.graphics.Rect) rectangle).centerX() - (width / 2);
+            int y = ((android.graphics.Rect) rectangle).centerY() - (height / 2);
+            return new org.opencv.core.Rect(x, y, width, height);
+        } else {
+            return null;
         }
-
-        return pupilCenterCoordinates;
     }
 
 
-
-    public static ArrayList<Point> getCircles(Mat imageMatrix, Rect boundary) {
-
-        Mat ROI = new Mat(imageMatrix, boundary);
-        Mat gray = new Mat();
-
-        Imgproc.cvtColor(ROI, gray, Imgproc.COLOR_BGR2GRAY);
-
-        Imgproc.medianBlur(gray, gray, 5);
-
-        //Imgproc.morphologyEx(gray, gray, 2, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(5,5)));
-
-        //Imgproc.adaptiveThreshold(gray, gray, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 15, 40);
-
-        Mat circles = new Mat();
-        Imgproc.HoughCircles(gray, circles, Imgproc.HOUGH_GRADIENT, 1.0, (double) gray.rows()/20, 100.0, 30.0, 0, 0);
-
-        ArrayList<Point> circleCenterPoints = new ArrayList<>();
-        for (int i = 0; i < circles.cols(); i++) {
-            double[] c = circles.get(0, i);
-            Point center = new Point(Math.round(c[0]), Math.round(c[1]));
-            circleCenterPoints.add(center);
-        }
-
-        for (int i = 0; i < circleCenterPoints.size(); i++) {
-            System.out.println(circleCenterPoints.get(i).toString());
-        }
-
-        return circleCenterPoints;
-    }
-
-
-    public static void processImage(Mat originalImage, Rect faceBoundingBox) {
+    public static void processImage(Mat originalImage, Rect faceBoundingBox, Point rightEye, Point leftEye) {
         System.out.println("Face bounding box: " + faceBoundingBox.toString());
 
         Mat greyImage = new Mat();
@@ -173,6 +105,10 @@ public class ImageProcessor {
 
         for (int i = 0; i < eyeBoundingBoxes.length; i++) {
             System.out.println("Potential eye bounding box: " + eyeBoundingBoxes[i].toString());
+
+            System.out.println("Left eye is in this box: " + eyeBoundingBoxes[i].contains(leftEye));
+            System.out.println("Right eye is in this box: " + eyeBoundingBoxes[i].contains(rightEye));
+
             Mat greyEye = new Mat(greyImage, eyeBoundingBoxes[i]);
             Mat binaryEye = new Mat();
 
@@ -180,10 +116,10 @@ public class ImageProcessor {
             int erosion_size = 5;
             int dilation_size = 5;
             Point defAnchor = new Point(-1,-1);
-            Mat erodeElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2*erosion_size + 1, 2 * erosion_size + 1));
-            Mat dilationElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2*dilation_size + 1, 2*dilation_size+1));
+            Mat erodeElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2 * erosion_size + 1, 2 * erosion_size + 1));
+            Mat dilationElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2 * dilation_size + 1, 2 * dilation_size + 1));
 
-            Imgproc.adaptiveThreshold(greyEye, binaryEye, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 11, 12);
+            Imgproc.adaptiveThreshold(greyEye, binaryEye, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 11, 10);
             Imgproc.erode(binaryEye, binaryEye, erodeElement, defAnchor, 2);
             Imgproc.dilate(binaryEye, binaryEye, dilationElement, defAnchor, 4);
             Imgproc.medianBlur(binaryEye, binaryEye, 5);

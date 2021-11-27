@@ -17,7 +17,12 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Rect;
 import android.media.Image;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -26,6 +31,7 @@ import android.util.Size;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -87,9 +93,10 @@ public class MainActivity extends AppCompatActivity {
     private final String MESSAGE_PHOTO_SAVED = "Photo saved!";
     private final String MESSAGE_PHOTO_SAVE_FAILED = "Failed to save photo.";
 
+    private ImageView imageView;
+    private PreviewView previewView;
     private TextView faceCounter;
     private TextView gazeCounter;
-    private PreviewView previewView;
     private ImageButton albumButton;
     private ImageButton captureButton;
     private ImageButton selectionButton;
@@ -97,7 +104,6 @@ public class MainActivity extends AppCompatActivity {
     private CameraSelector cameraSelector;
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     private ProcessCameraProvider cameraProvider;
-
     private Executor cameraExecutor;
     private ImageCapture imageCapture;
 
@@ -107,6 +113,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        imageView = findViewById(R.id.image_view);
         previewView = findViewById(R.id.preview_view);
         faceCounter = findViewById(R.id.face_counter);
         gazeCounter = findViewById(R.id.gaze_counter);
@@ -284,21 +291,10 @@ public class MainActivity extends AppCompatActivity {
                                     Bitmap bitmap = previewView.getBitmap();
                                     Mat imageMatrix = new Mat();
                                     Utils.bitmapToMat(bitmap, imageMatrix);
-
-                                    //Mat imageMatrix = ImageProcessor.convertYUVtoMat(mediaImage);
                                     /*
-                                     * Now that we have our image in the form of a Mat object,
-                                     * we can obtain the centers of the pupils for each face in
-                                     * the image.
-                                     */
-                                    //ArrayList<Point> pupilCenterCoordinates = ImageProcessor.getCircles(imageMatrix);
-                                    //for (int i = 0; i < pupilCenterCoordinates.size(); i++) {
-                                    //    System.out.println(pupilCenterCoordinates.get(i).toString());
-                                    //}
-                                    /*
-                                     * Finally, we run call the detectGazes method of
-                                     * GazeDetector to determine the number of faces which are
-                                     * looking toward the camera and update the value of
+                                     * Now, we call the detectGazes method of GazeDetector to
+                                     * determine the number of faces which are looking toward the
+                                     * camera and update the value of
                                      * numberOfFacesLookingTowardCamera.
                                      */
                                     numberOfGazesDetected = GazeDetector.detectGazesWithLandmarks(faces, imageMatrix);
@@ -485,5 +481,33 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    /* ---------------------------------------------------------------------------------------------
+     * https://stackoverflow.com/questions/4743116/get-screen-width-and-height-in-android
+     */
+    public static int getScreenWidth() {
+        return Resources.getSystem().getDisplayMetrics().widthPixels;
+    }
+
+    public static int getScreenHeight() {
+        return Resources.getSystem().getDisplayMetrics().heightPixels;
+    }
+    /* ---------------------------------------------------------------------------------------------
+     */
+
+//    public static void drawRectangles(Rect[] rectangles) {
+//        Bitmap bitmap = Bitmap.createBitmap(getScreenWidth(), getScreenHeight(), Bitmap.Config.ARGB_8888);
+//        Canvas canvas = new Canvas(bitmap);
+//        Paint paint = new Paint();
+//        paint.setStyle(Paint.Style.FILL);
+//        paint.setColor(Color.YELLOW);
+//        paint.setAntiAlias(true);
+//
+//        for (int i = 0; i < rectangles.length; i++) {
+//            canvas.drawRect(rectangles[i], paint);
+//        }
+//
+//        imageView.setImageBitmap(bitmap);
+//
+//    }
 
 }
