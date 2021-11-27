@@ -258,7 +258,8 @@ public class GazeDetector {
                 break;
             }
 
-            if ((faceBoundingBoxAsOpenCVRect.x + faceBoundingBoxAsOpenCVRect.width > 1080) || (faceBoundingBoxAsOpenCVRect.y + faceBoundingBoxAsOpenCVRect.height > 1920)) {
+            if ((faceBoundingBoxAsOpenCVRect.x + faceBoundingBoxAsOpenCVRect.width > MainActivity.PIXEL_COUNT_VERTICAL) ||
+                    (faceBoundingBoxAsOpenCVRect.y + faceBoundingBoxAsOpenCVRect.height > MainActivity.PIXEL_COUNT_HORIZONTAL)) {
                 break;
             }
 
