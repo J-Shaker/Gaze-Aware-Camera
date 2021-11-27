@@ -13,6 +13,7 @@ package com.example.gazeawarecamera;
 
 import static com.example.gazeawarecamera.MainActivity.eyeCascade;
 
+import android.graphics.Bitmap;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.media.Image;
@@ -26,6 +27,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.KeyPoint;
@@ -175,6 +177,14 @@ public class GazeDetector {
         Mat greyImage = new Mat();
         Imgproc.cvtColor(originalImage, greyImage, Imgproc.COLOR_BGR2GRAY);
         Mat greyFace = new Mat(greyImage, faceBoundingBox);
+
+        // debugging
+//        Bitmap bmpGrey = null;
+//        Bitmap bmpFace = null;
+//        bmpGrey = Bitmap.createBitmap(greyImage.cols(), greyImage.rows(), Bitmap.Config.ARGB_8888);
+//        Utils.matToBitmap(greyImage, bmpGrey);
+//        bmpFace = Bitmap.createBitmap(greyFace.cols(), greyFace.rows(), Bitmap.Config.ARGB_8888);
+//        Utils.matToBitmap(greyFace, bmpFace);
 
         MatOfRect eyes = new MatOfRect();
         eyeCascade.detectMultiScale(greyFace, eyes, 1.05, 5);
@@ -390,10 +400,10 @@ public class GazeDetector {
                 break;
             }
 
-            if ((faceBoundingBoxAsOpenCVRect.x + faceBoundingBoxAsOpenCVRect.width > MainActivity.PIXEL_COUNT_VERTICAL) ||
-                    (faceBoundingBoxAsOpenCVRect.y + faceBoundingBoxAsOpenCVRect.height > MainActivity.PIXEL_COUNT_HORIZONTAL)) {
-                break;
-            }
+//            if ((faceBoundingBoxAsOpenCVRect.x + faceBoundingBoxAsOpenCVRect.width > MainActivity.PIXEL_COUNT_VERTICAL) ||
+//                    (faceBoundingBoxAsOpenCVRect.y + faceBoundingBoxAsOpenCVRect.height > MainActivity.PIXEL_COUNT_HORIZONTAL)) {
+//                break;
+//            }
 
             Point leftEyeCoordinate = new Point(leftEye.getPosition().x, leftEye.getPosition().y);
             Point rightEyeCoordinate = new Point(rightEye.getPosition().x, rightEye.getPosition().y);
