@@ -343,6 +343,7 @@ public class GazeDetector {
         }
         return numberOfFacesLookingTowardCamera;
     }
+    //
 
 
     public int detectGazesWithLandmarks(@NonNull List<Face> faces, Image image) {
