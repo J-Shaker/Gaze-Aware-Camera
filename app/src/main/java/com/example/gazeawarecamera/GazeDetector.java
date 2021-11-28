@@ -280,6 +280,7 @@ public class GazeDetector {
          */
         return null;
     }
+
     /*
      * The following method attempts to determine the number of faces in the image that are
      * looking toward the camera. Specifically, we compare the angle between the center of the image
@@ -413,6 +414,7 @@ public class GazeDetector {
 
             //Point leftPupilCenterPoint = isolatePupilCoordinates(potentialLeftPupils, leftEar.getPosition(), nose.getPosition());
             //Point rightPupilCenterPoint = isolatePupilCoordinates(potentialRightPupils, nose.getPosition(), rightEar.getPosition());
+
         }
         return numberOfFacesLookingTowardCamera;
     }
