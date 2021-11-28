@@ -200,16 +200,17 @@ public class GazeDetector {
             Mat binaryEye = new Mat();
 
             // elements used for erode & dilation kernel. values used from https://www.tutorialspoint.com/java_dip/eroding_dilating.htm
-            int erosion_size = 1;
-            int dilation_size = 1;
-            Point defAnchor = new Point(-1,-1);
+            int erosion_size = 3;
+            int dilation_size = 3;
+            Point defAnchor = new Point(-1, -1);
             Mat erodeElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2 * erosion_size + 1, 2 * erosion_size + 1));
             Mat dilationElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2 * dilation_size + 1, 2 * dilation_size + 1));
 
-            Imgproc.adaptiveThreshold(greyEye, binaryEye, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 11, 2);
-            Imgproc.erode(binaryEye, binaryEye, erodeElement, defAnchor);
-            Imgproc.dilate(binaryEye, binaryEye, dilationElement, defAnchor);
-            //Imgproc.medianBlur(binaryEye, binaryEye, 5);
+            Imgproc.adaptiveThreshold(greyEye, binaryEye, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 19, 3);
+            Imgproc.erode(binaryEye, binaryEye, erodeElement, defAnchor, 1);
+            Imgproc.dilate(binaryEye, binaryEye, dilationElement, defAnchor, 2);
+            //Imgproc.bilateralFilter(binaryEye, binaryEye, 7, 75, 75, Core.BORDER_DEFAULT);
+            Imgproc.medianBlur(binaryEye, binaryEye, 5);
             MatOfKeyPoint keyPoints = new MatOfKeyPoint();
             detector.detect(binaryEye, keyPoints);
 
