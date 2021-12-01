@@ -108,6 +108,14 @@ public class MainActivity extends AppCompatActivity implements DrawingListener {
 
     private final GazeDetector gazeDetector = new GazeDetector(this);
 
+    private static int getScreenWidth() {
+        return Resources.getSystem().getDisplayMetrics().widthPixels;
+    }
+
+    private static int getScreenHeight() {
+        return Resources.getSystem().getDisplayMetrics().heightPixels;
+    }
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -473,17 +481,9 @@ public class MainActivity extends AppCompatActivity implements DrawingListener {
 
     }
 
-    private static int getScreenWidth() {
-        return Resources.getSystem().getDisplayMetrics().widthPixels;
-    }
-
-    private static int getScreenHeight() {
-        return Resources.getSystem().getDisplayMetrics().heightPixels;
-    }
-
     @Override
     public void drawRectangles(ArrayList<Rect> rectangles) {
-        Bitmap bitmap = Bitmap.createBitmap(getScreenWidth(), getScreenHeight(), Bitmap.Config.ARGB_8888);
+        Bitmap bitmap = Bitmap.createBitmap(PIXEL_COUNT_HORIZONTAL, PIXEL_COUNT_VERTICAL, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
         Paint paint = new Paint();
         paint.setStyle(Paint.Style.STROKE);

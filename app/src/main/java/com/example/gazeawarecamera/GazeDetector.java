@@ -181,7 +181,7 @@ public class GazeDetector {
 //        Utils.matToBitmap(greyFace, bmpFace);
 
         MatOfRect eyes = new MatOfRect();
-        eyeCascade.detectMultiScale(greyFace, eyes, 1.05, 60);
+        eyeCascade.detectMultiScale(greyFace, eyes, 1.05, 70);
         org.opencv.core.Rect[] eyeBoundingBoxes = eyes.toArray();
 
         SimpleBlobDetector_Params parameters = new SimpleBlobDetector_Params();
@@ -191,7 +191,6 @@ public class GazeDetector {
         SimpleBlobDetector detector = SimpleBlobDetector.create(parameters);
 
         for (int i = 0; i < eyeBoundingBoxes.length; i++) {
-
 
             Mat greyEye = new Mat(greyFace, eyeBoundingBoxes[i]);
 
