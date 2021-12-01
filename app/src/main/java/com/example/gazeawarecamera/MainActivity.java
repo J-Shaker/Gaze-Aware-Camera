@@ -62,9 +62,6 @@ import com.google.mlkit.vision.face.FaceDetector;
 import com.google.mlkit.vision.face.FaceDetectorOptions;
 
 import org.opencv.android.OpenCVLoader;
-import org.opencv.android.Utils;
-import org.opencv.core.Mat;
-import org.opencv.core.Point;
 import org.opencv.objdetect.CascadeClassifier;
 
 import java.io.File;
@@ -290,7 +287,7 @@ public class MainActivity extends AppCompatActivity implements DrawingListener {
                                  * camera and update the value of
                                  * numberOfFacesLookingTowardCamera.
                                  */
-                                numberOfGazesDetected = gazeDetector.detectGazesWithLandmarks(faces, mediaImage);
+                                numberOfGazesDetected = gazeDetector.detectGazesWithDistances(faces, mediaImage);
                                 /*
                                  * We now verify if number of subjects looking toward the
                                  * camera is equivalent to the number of faces detected by
@@ -345,12 +342,12 @@ public class MainActivity extends AppCompatActivity implements DrawingListener {
         cameraProvider.bindToLifecycle(this, cameraSelector, imageAnalysis);
     }
 
-    /* ---------------------------------------------------------------------------------------------
+    /*
      * The next set of methods are responsible for functionality pertaining to the UI. This includes
      * updating the text on screen to adapt to changes in variables as well as setting the behavior
      * of buttons when clicked by the user.
      */
-    public void updateFaceCounter(int numberOfFaces) {
+    private void updateFaceCounter(int numberOfFaces) {
         /*
          * This method updates the faceCounterTextView widget, which tells the user how many faces
          * have been detected by ML Kit.
@@ -358,7 +355,7 @@ public class MainActivity extends AppCompatActivity implements DrawingListener {
         faceCounter.setText(getString(R.string.face_counter, numberOfFaces));
     }
 
-    public void updateGazeCounter(int numberOfGazes) {
+    private void updateGazeCounter(int numberOfGazes) {
         /*
          * This method updates the gazeCounterTextView widget, which tells the user how many faces
          * have been detected by ML Kit.
@@ -406,7 +403,7 @@ public class MainActivity extends AppCompatActivity implements DrawingListener {
 
     }
 
-    public void openAlbum() {
+    private void openAlbum() {
         Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         startActivity(intent);
     }
@@ -476,11 +473,11 @@ public class MainActivity extends AppCompatActivity implements DrawingListener {
 
     }
 
-    public static int getScreenWidth() {
+    private static int getScreenWidth() {
         return Resources.getSystem().getDisplayMetrics().widthPixels;
     }
 
-    public static int getScreenHeight() {
+    private static int getScreenHeight() {
         return Resources.getSystem().getDisplayMetrics().heightPixels;
     }
 
