@@ -13,6 +13,7 @@ package com.example.gazeawarecamera;
 
 import static com.example.gazeawarecamera.MainActivity.eyeCascade;
 
+import android.graphics.Bitmap;
 import android.graphics.PointF;
 import android.graphics.Rect;
 import android.media.Image;
@@ -26,6 +27,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.opencv.android.Utils;
 import org.opencv.core.CvType;
 import org.opencv.core.KeyPoint;
 import org.opencv.core.Mat;
@@ -49,8 +51,8 @@ public class GazeDetector {
      * We are going to define horizontal and vertical tolerance values which will account for margin
      * margin of error when making our gaze-determining calculations.
      */
-    private static final double HORIZONTAL_TOLERANCE = 20.0;
-    private static final double VERTICAL_TOLERANCE = 20.0;
+    private static final double HORIZONTAL_TOLERANCE = 75.00;
+    private static final double VERTICAL_TOLERANCE = 75.0;
 
     /*
      * Our MainActivity class implements the DrawingListener interface. The only reason for this is
@@ -166,9 +168,6 @@ public class GazeDetector {
 
         ArrayList<Point> centerPoints = new ArrayList<Point>();
 
-        ArrayList<Rect> rectangles = new ArrayList<Rect>();
-        rectangles.add(faceBoundingBox);
-
         Mat greyFace = new Mat(greyImage, (org.opencv.core.Rect) changeRect(faceBoundingBox));
 
         // Debugging: WHOLE IMAGE
@@ -182,54 +181,56 @@ public class GazeDetector {
 //        Utils.matToBitmap(greyFace, bmpFace);
 
         MatOfRect eyes = new MatOfRect();
-        eyeCascade.detectMultiScale(greyFace, eyes, 1.05, 5);
+        eyeCascade.detectMultiScale(greyFace, eyes, 1.05, 60);
         org.opencv.core.Rect[] eyeBoundingBoxes = eyes.toArray();
 
         SimpleBlobDetector_Params parameters = new SimpleBlobDetector_Params();
-        parameters.set_filterByCircularity(true);
-        parameters.set_minCircularity((float) 0.5);
-        parameters.set_maxCircularity((float) 1.0);
+        // parameters.set_filterByCircularity(true);
+        // parameters.set_minCircularity((float) 0.5);
+        // parameters.set_maxCircularity((float) 1.0);
         SimpleBlobDetector detector = SimpleBlobDetector.create(parameters);
 
         for (int i = 0; i < eyeBoundingBoxes.length; i++) {
 
-            rectangles.add((Rect) changeRect(eyeBoundingBoxes[i]));
 
             Mat greyEye = new Mat(greyFace, eyeBoundingBoxes[i]);
 
             // Debugging: EYE
-//            Bitmap bmpEye = null;
-//            bmpEye = Bitmap.createBitmap(greyEye.cols(), greyEye.rows(), Bitmap.Config.ARGB_8888);
-//            Utils.matToBitmap(greyEye, bmpEye);
+            Bitmap bmpEye = null;
+            bmpEye = Bitmap.createBitmap(greyEye.cols(), greyEye.rows(), Bitmap.Config.ARGB_8888);
+            Utils.matToBitmap(greyEye, bmpEye);
 
 
             Mat binaryEye = new Mat();
 
             // elements used for erode & dilation kernel. values used from https://www.tutorialspoint.com/java_dip/eroding_dilating.htm
-            int erosion_size = 3;
-            int dilation_size = 3;
+            int erosion_size = 2;
+            int dilation_size = 2;
             Point defAnchor = new Point(-1, -1);
             Mat erodeElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2 * erosion_size + 1, 2 * erosion_size + 1));
             Mat dilationElement = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(2 * dilation_size + 1, 2 * dilation_size + 1));
 
-            Imgproc.adaptiveThreshold(greyEye, binaryEye, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 19, 3);
-            Imgproc.erode(binaryEye, binaryEye, erodeElement, defAnchor, 1);
-            Imgproc.dilate(binaryEye, binaryEye, dilationElement, defAnchor, 2);
+            Imgproc.adaptiveThreshold(greyEye, binaryEye, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 69, 39);
+            Imgproc.erode(binaryEye, binaryEye, erodeElement, defAnchor, 2);
+            Imgproc.dilate(binaryEye, binaryEye, dilationElement, defAnchor, 4);
             Imgproc.medianBlur(binaryEye, binaryEye, 5);
 
             MatOfKeyPoint keyPoints = new MatOfKeyPoint();
             detector.detect(binaryEye, keyPoints);
 
             // Debugging: EYE AFTER PROCESSING
-//            Bitmap bmpProcessedEye = null;
-//            bmpProcessedEye = Bitmap.createBitmap(binaryEye.cols(), binaryEye.rows(), Bitmap.Config.ARGB_8888);
-//            Utils.matToBitmap(binaryEye, bmpProcessedEye);
-
-            drawingListener.drawRectangles(rectangles);
+            Bitmap bmpProcessedEye = null;
+            bmpProcessedEye = Bitmap.createBitmap(binaryEye.cols(), binaryEye.rows(), Bitmap.Config.ARGB_8888);
+            Utils.matToBitmap(binaryEye, bmpProcessedEye);
 
             KeyPoint[] keyPointsArray = keyPoints.toArray();
             for (int j = 0; j < keyPointsArray.length; j++) {
-                centerPoints.add(keyPointsArray[i].pt);
+                Point point = keyPointsArray[j].pt;
+                double adjustedX = point.x + eyeBoundingBoxes[j].x + faceBoundingBox.left;
+                double adjustedY = point.y + eyeBoundingBoxes[j].y + faceBoundingBox.top;
+                Point adjustedPoint = new Point(adjustedX, adjustedY);
+                System.out.println("Center Point: " + adjustedPoint.toString());
+                centerPoints.add(adjustedPoint);
             }
 
         }
@@ -268,7 +269,7 @@ public class GazeDetector {
              * actual distance between these points for the purposes of this algorithm.
              */
             double distanceFromMinToPoint = Geometry.computeHorizontalDistanceBetweenTwoPoints(minimumX, point);
-            double distanceFromPointToMax = Geometry.computeDistanceBetweenTwoPoints(maximumX, point);
+            double distanceFromPointToMax = Geometry.computeHorizontalDistanceBetweenTwoPoints(maximumX, point);
             double distanceFromMinToMax = Geometry.computeHorizontalDistanceBetweenTwoPoints(minimumX, maximumX);
             /*
              * Now, check if the sum of two smaller distances adds up to the longer distance. If it
@@ -291,6 +292,8 @@ public class GazeDetector {
          * care that the matrix returned is in grey.
          */
         Mat imageMatrix = imageToGreyMatrix(image);
+
+        ArrayList<Rect> faceBoxes = new ArrayList<Rect>();
         /*
          * We assume that there is no one looking toward the camera.
          */
@@ -313,10 +316,10 @@ public class GazeDetector {
              */
             try {
                 if (faces.get(i).getLeftEyeOpenProbability() < 0.9 || faces.get(i).getRightEyeOpenProbability() < 0.9) {
-                    break;
+                    continue;
                 }
             } catch (NullPointerException e) {
-                break;
+                continue;
             }
             /*
              * Now we will retrieve the landmarks we are going to be using. It is possible that ML
@@ -330,7 +333,7 @@ public class GazeDetector {
             FaceLandmark rightEar = faces.get(i).getLandmark(FaceLandmark.RIGHT_EAR);
             FaceLandmark nose = faces.get(i).getLandmark(FaceLandmark.NOSE_BASE);
             if (leftEye == null || rightEye == null || leftEar == null || rightEar == null || nose == null) {
-                break;
+                continue;
             }
             /*
              * Those landmarks are necessary, but they are not the only location we need to
@@ -341,6 +344,23 @@ public class GazeDetector {
              * we can obtain from ML Kit.
              */
             android.graphics.Rect faceBoundingBox = faces.get(i).getBoundingBox();
+
+            int left;
+            if (faceBoundingBox.left < MainActivity.PIXEL_COUNT_HORIZONTAL / 2) {
+                left = (faceBoundingBox.left + 2 * Math.abs(faceBoundingBox.left - MainActivity.PIXEL_COUNT_HORIZONTAL / 2));
+            } else {
+                left = (faceBoundingBox.left - 2 * Math.abs(faceBoundingBox.left - MainActivity.PIXEL_COUNT_HORIZONTAL / 2));
+            }
+
+            int right;
+            if (faceBoundingBox.right < MainActivity.PIXEL_COUNT_HORIZONTAL / 2) {
+                right = (faceBoundingBox.right + 2 * Math.abs(faceBoundingBox.right - MainActivity.PIXEL_COUNT_HORIZONTAL / 2));
+            } else {
+                right = (faceBoundingBox.right - 2 * Math.abs(faceBoundingBox.right - MainActivity.PIXEL_COUNT_HORIZONTAL / 2));
+            }
+
+
+            faceBoxes.add(new Rect(left, faceBoundingBox.top, right, faceBoundingBox.bottom));
             /*
              * Now we can pass those into our method and get back the list of coordinates. The list
              * should have a size of two, but it could be larger. We discuss that below.
@@ -359,7 +379,7 @@ public class GazeDetector {
             Point leftPupilCenterPoint = isolatePupilCoordinates(pupilCoordinates, leftEar.getPosition(), nose.getPosition());
             Point rightPupilCenterPoint = isolatePupilCoordinates(pupilCoordinates, nose.getPosition(), rightEar.getPosition());
             if (leftPupilCenterPoint == null || rightPupilCenterPoint == null) {
-                break;
+                continue;
             }
             /*
              * Now that we have our two pupil coordinates, we can compare their locations to the
@@ -405,6 +425,9 @@ public class GazeDetector {
             }
 
         }
+
+        drawingListener.drawRectangles(faceBoxes);
+
         return numberOfFacesLookingTowardCamera;
     }
 
