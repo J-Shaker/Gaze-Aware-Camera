@@ -412,7 +412,7 @@ public class MainActivity extends AppCompatActivity implements DrawingListener {
     }
 
     private void openAlbum() {
-        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        Intent intent = new Intent(Intent.ACTION_VIEW, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         startActivity(intent);
     }
 
@@ -477,6 +477,7 @@ public class MainActivity extends AppCompatActivity implements DrawingListener {
             outputStream.close();
 
             eyeCascade = new CascadeClassifier(cascadeFile.getAbsolutePath());
+
             eyeCascade.load(cascadeFile.getAbsolutePath());
             if (eyeCascade.empty()) {
                 Log.e(TAG, "Failed to load cascade classifier");
