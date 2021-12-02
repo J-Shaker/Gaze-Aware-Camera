@@ -14,6 +14,8 @@ package com.example.gazeawarecamera;
 import static android.content.ContentValues.TAG;
 
 import android.Manifest;
+import android.app.Activity;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -25,6 +27,8 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.media.Image;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.util.Size;
@@ -69,6 +73,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -76,10 +81,6 @@ import java.util.concurrent.Executors;
 
 
 public class MainActivity extends AppCompatActivity implements DrawingListener {
-
-    public static final String FILE_SAVE_DIRECTORY = "Gaze Aware Camera Photos";
-    public static final String FILE_NAME_FORMAT = "IMG ";
-    public static final String FILE_TYPE = ".jpg";
 
     public static final int PIXEL_COUNT_HORIZONTAL = 1920;
     public static final int PIXEL_COUNT_VERTICAL = 1080;
@@ -172,7 +173,7 @@ public class MainActivity extends AppCompatActivity implements DrawingListener {
          */
         cameraProvider.unbindAll();
         bindAnalysisUseCase();
-        //bindCaptureUseCase();
+        bindCaptureUseCase();
         bindPreviewUseCase();
     }
 
@@ -198,7 +199,6 @@ public class MainActivity extends AppCompatActivity implements DrawingListener {
         cameraExecutor = Executors.newSingleThreadExecutor();
         imageCapture = new ImageCapture.Builder()
                 .setIoExecutor(cameraExecutor)
-                .setTargetRotation(previewView.getDisplay().getRotation())
                 .build();
         /*
          * With imageCapture initialized, it can be bound to the hardware (cameraProvider) as
@@ -302,7 +302,7 @@ public class MainActivity extends AppCompatActivity implements DrawingListener {
                                  * FaceDetector.
                                  */
                                 if (numberOfFacesDetected == numberOfGazesDetected) {
-                                    //capturePhoto();
+                                    capturePhoto();
                                 }
                             }
                             /*
@@ -417,15 +417,33 @@ public class MainActivity extends AppCompatActivity implements DrawingListener {
     }
 
     private void capturePhoto() {
-        ImageCapture.OutputFileOptions outputFileOptions = new ImageCapture.OutputFileOptions.Builder(getPhotoPath()).build();
+
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg");
+
+        ImageCapture.OutputFileOptions outputFileOptions = new ImageCapture.OutputFileOptions.Builder(
+                getContentResolver(),
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+                .build();
+
         imageCapture.takePicture(outputFileOptions, cameraExecutor, new ImageCapture.OnImageSavedCallback() {
                 @Override
                 public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
-                    Toast.makeText(MainActivity.this, MESSAGE_PHOTO_SAVED, Toast.LENGTH_SHORT).show();
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(MainActivity.this, MESSAGE_PHOTO_SAVED, Toast.LENGTH_SHORT).show();
+                        }
+                    });
                 }
                 @Override
                 public void onError(@NonNull ImageCaptureException error) {
-                    Toast.makeText(MainActivity.this, MESSAGE_PHOTO_SAVE_FAILED, Toast.LENGTH_SHORT).show();
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(MainActivity.this, MESSAGE_PHOTO_SAVE_FAILED, Toast.LENGTH_SHORT).show();
+                        }
+                    });
                 }
             });
     }
@@ -442,13 +460,6 @@ public class MainActivity extends AppCompatActivity implements DrawingListener {
         });
         selectionMenu.show();
     }
-
-
-    private File getPhotoPath() {
-        return null;
-    }
-
-
 
     private void openResourceFile() {
         try {

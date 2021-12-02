@@ -180,8 +180,15 @@ public class GazeDetector {
 //        bmpFace = Bitmap.createBitmap(greyFace.cols(), greyFace.rows(), Bitmap.Config.ARGB_8888);
 //        Utils.matToBitmap(greyFace, bmpFace);
 
+        Mat croppedFace = new Mat(greyFace, new org.opencv.core.Rect(0, 0, greyFace.cols(), greyFace.rows()/2));
+
+        // Debugging: FACE AFTER CROPPING
+//        Bitmap bmpCroppedFace = null;
+//        bmpCroppedFace = Bitmap.createBitmap(croppedFace.cols(), croppedFace.rows(), Bitmap.Config.ARGB_8888);
+//        Utils.matToBitmap(croppedFace, bmpCroppedFace);
+
         MatOfRect eyes = new MatOfRect();
-        eyeCascade.detectMultiScale(greyFace, eyes, 1.05, 70);
+        eyeCascade.detectMultiScale(croppedFace, eyes, 1.05, 70);
         org.opencv.core.Rect[] eyeBoundingBoxes = eyes.toArray();
 
         SimpleBlobDetector_Params parameters = new SimpleBlobDetector_Params();
@@ -198,7 +205,6 @@ public class GazeDetector {
             Bitmap bmpEye = null;
             bmpEye = Bitmap.createBitmap(greyEye.cols(), greyEye.rows(), Bitmap.Config.ARGB_8888);
             Utils.matToBitmap(greyEye, bmpEye);
-
 
             Mat binaryEye = new Mat();
 
