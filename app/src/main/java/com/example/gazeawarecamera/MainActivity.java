@@ -118,6 +118,21 @@ public class MainActivity extends AppCompatActivity implements DrawingListener {
     }
 
     @Override
+    public void drawRectangles(ArrayList<Rect> rectangles) {
+        Bitmap bitmap = Bitmap.createBitmap(getScreenWidth(), getScreenHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        Paint paint = new Paint();
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setColor(Color.YELLOW);
+        paint.setStrokeWidth(8);
+        paint.setAntiAlias(true);
+        for (int i = 0; i < rectangles.size(); i++) {
+            canvas.drawRect(rectangles.get(i), paint);
+        }
+        imageView.setImageBitmap(bitmap);
+    }
+
+    @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -138,7 +153,7 @@ public class MainActivity extends AppCompatActivity implements DrawingListener {
 
     private void getPermissionToUseCamera() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.CAMERA}, 1);
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 1);
         }
     }
 
@@ -270,77 +285,77 @@ public class MainActivity extends AppCompatActivity implements DrawingListener {
                  * gaze detection.
                  */
                 Task<List<Face>> result = faceDetector.process(image).addOnSuccessListener(new OnSuccessListener<List<Face>>() {
-                        @Override
-                        public void onSuccess(List<Face> faces) {
+                    @Override
+                    public void onSuccess(List<Face> faces) {
+                        /*
+                         * We let numberOfFacesDetected be equal to faces.size(), as
+                         * this is the list containing all detected faces and therefore
+                         * it's size reveals the amount. Then we assume that there are
+                         * 0 faces looking toward the camera.
+                         */
+                        int numberOfFacesDetected = faces.size();
+                        int numberOfGazesDetected = 0;
+                        /*
+                         * We only want to take action if faces.size() returns an
+                         * integer greater than or equal to the desired number of
+                         * subjects (faces). We only allow the user to select a maximum
+                         * desired amount of four, though the application will attempt
+                         * to perform gaze detection for any number of subjects detected
+                         * by FaceDetector.
+                         */
+                        if (numberOfFacesDetected >= desiredNumberOfSubjects) {
                             /*
-                             * We let numberOfFacesDetected be equal to faces.size(), as
-                             * this is the list containing all detected faces and therefore
-                             * it's size reveals the amount. Then we assume that there are
-                             * 0 faces looking toward the camera.
+                             * Now, we call the detectGazes method of GazeDetector to
+                             * determine the number of faces which are looking toward the
+                             * camera and update the value of
+                             * numberOfFacesLookingTowardCamera.
                              */
-                            int numberOfFacesDetected = faces.size();
-                            int numberOfGazesDetected = 0;
+                            numberOfGazesDetected = gazeDetector.detectGazesWithDistances(faces, mediaImage);
                             /*
-                             * We only want to take action if faces.size() returns an
-                             * integer greater than or equal to the desired number of
-                             * subjects (faces). We only allow the user to select a maximum
-                             * desired amount of four, though the application will attempt
-                             * to perform gaze detection for any number of subjects detected
-                             * by FaceDetector.
+                             * We now verify if number of subjects looking toward the
+                             * camera is equivalent to the number of faces detected by
+                             * FaceDetector.
                              */
-                            if (numberOfFacesDetected >= desiredNumberOfSubjects) {
-                                /*
-                                 * Now, we call the detectGazes method of GazeDetector to
-                                 * determine the number of faces which are looking toward the
-                                 * camera and update the value of
-                                 * numberOfFacesLookingTowardCamera.
-                                 */
-                                numberOfGazesDetected = gazeDetector.detectGazesWithDistances(faces, mediaImage);
-                                /*
-                                 * We now verify if number of subjects looking toward the
-                                 * camera is equivalent to the number of faces detected by
-                                 * FaceDetector.
-                                 */
-                                if (numberOfFacesDetected == numberOfGazesDetected) {
-                                    capturePhoto();
-                                }
+                            if (numberOfFacesDetected == numberOfGazesDetected) {
+                                capturePhoto();
                             }
-                            /*
-                             * Finally, we update our two UI TextViews to reflect changes
-                             * in the number of faces detected and the number of gazes
-                             * detected.
-                             */
-                            updateFaceCounter(numberOfFacesDetected);
-                            updateGazeCounter(numberOfGazesDetected);
                         }
-                    })
-                    .addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            /*
-                             * We are not equipped to handle any errors FaceDetector
-                             * encounters, but we can update the UI to let the user know
-                             * that their face is definitely undetected.
-                             */
-                            updateFaceCounter(0);
-                            updateGazeCounter(0);
-                        }
-                    })
-                    .addOnCompleteListener(new OnCompleteListener<List<Face>>() {
-                        @Override
-                        public void onComplete(@NonNull Task<List<Face>> task) {
-                            /*
-                             * The ImageProxy in memory must be closed because we have
-                             * configured the camera to keep only the latest frame. If we
-                             * failed to close the ImageProxy, we would not be able to
-                             * analyze any more frames past the one which was not closed
-                             * (which would always be the first in this case). Note that the
-                             * onComplete method will run regardless of whether
-                             * faceDetector.process succeeds or fails.
-                             */
-                            imageProxy.close();
-                        }
-                    });
+                        /*
+                         * Finally, we update our two UI TextViews to reflect changes
+                         * in the number of faces detected and the number of gazes
+                         * detected.
+                         */
+                        updateFaceCounter(numberOfFacesDetected);
+                        updateGazeCounter(numberOfGazesDetected);
+                    }
+                })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                /*
+                                 * We are not equipped to handle any errors FaceDetector
+                                 * encounters, but we can update the UI to let the user know
+                                 * that their face is definitely undetected.
+                                 */
+                                updateFaceCounter(0);
+                                updateGazeCounter(0);
+                            }
+                        })
+                        .addOnCompleteListener(new OnCompleteListener<List<Face>>() {
+                            @Override
+                            public void onComplete(@NonNull Task<List<Face>> task) {
+                                /*
+                                 * The ImageProxy in memory must be closed because we have
+                                 * configured the camera to keep only the latest frame. If we
+                                 * failed to close the ImageProxy, we would not be able to
+                                 * analyze any more frames past the one which was not closed
+                                 * (which would always be the first in this case). Note that the
+                                 * onComplete method will run regardless of whether
+                                 * faceDetector.process succeeds or fails.
+                                 */
+                                imageProxy.close();
+                            }
+                        });
             }
         });
         /*
@@ -427,32 +442,33 @@ public class MainActivity extends AppCompatActivity implements DrawingListener {
                 .build();
 
         imageCapture.takePicture(outputFileOptions, cameraExecutor, new ImageCapture.OnImageSavedCallback() {
-                @Override
-                public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(MainActivity.this, MESSAGE_PHOTO_SAVED, Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                }
-                @Override
-                public void onError(@NonNull ImageCaptureException error) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(MainActivity.this, MESSAGE_PHOTO_SAVE_FAILED, Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                }
-            });
+            @Override
+            public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(MainActivity.this, MESSAGE_PHOTO_SAVED, Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+
+            @Override
+            public void onError(@NonNull ImageCaptureException error) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(MainActivity.this, MESSAGE_PHOTO_SAVE_FAILED, Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        });
     }
 
     public void openSelection() {
         PopupMenu selectionMenu = new PopupMenu(MainActivity.this, selectionButton);
         selectionMenu.getMenuInflater().inflate(R.menu.popup_menu, selectionMenu.getMenu());
         selectionMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-            public boolean onMenuItemClick (MenuItem item) {
+            public boolean onMenuItemClick(MenuItem item) {
                 desiredNumberOfSubjects = Integer.parseInt(item.getTitle().toString());
                 Toast.makeText(MainActivity.this, MESSAGE_DESIRED_SUBJECTS_CHANGED + item.getTitle() + ".", Toast.LENGTH_SHORT).show();
                 return true;
@@ -486,6 +502,7 @@ public class MainActivity extends AppCompatActivity implements DrawingListener {
                 Log.i(TAG, "Loaded cascade classifier from " + cascadeFile.getAbsolutePath());
 
             cascadeDirectory.delete();
+
         } catch (IOException e) {
             e.printStackTrace();
             Log.e(TAG, "Failed to load cascade. Exception thrown: " + e);
@@ -493,18 +510,4 @@ public class MainActivity extends AppCompatActivity implements DrawingListener {
 
     }
 
-    @Override
-    public void drawRectangles(ArrayList<Rect> rectangles) {
-        Bitmap bitmap = Bitmap.createBitmap(PIXEL_COUNT_HORIZONTAL, PIXEL_COUNT_VERTICAL, Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-        Paint paint = new Paint();
-        paint.setStyle(Paint.Style.STROKE);
-        paint.setColor(Color.YELLOW);
-        paint.setStrokeWidth(8);
-        paint.setAntiAlias(true);
-        for (int i = 0; i < rectangles.size(); i++) {
-            canvas.drawRect(rectangles.get(i), paint);
-        }
-        imageView.setImageBitmap(bitmap);
-    }
 }
