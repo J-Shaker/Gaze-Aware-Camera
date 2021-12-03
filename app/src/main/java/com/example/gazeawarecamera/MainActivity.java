@@ -292,29 +292,24 @@ public class MainActivity extends AppCompatActivity implements DrawingListener {
                         int numberOfFacesDetected = faces.size();
                         int numberOfGazesDetected = 0;
                         /*
-                         * We only want to take action if faces.size() returns an
+                         * Now, we call the detectGazes method of GazeDetector to
+                         * determine the number of faces which are looking toward the
+                         * camera and update the value of
+                         * numberOfFacesLookingTowardCamera.
+                         */
+                        numberOfGazesDetected = gazeDetector.detectGazesWithDistances(faces, mediaImage);
+                        /*
+                         * We now verify if number of subjects looking toward the
+                         * camera is equivalent to the number of faces detected by
+                         * FaceDetector. We also only want to take action if faces.size() returns an
                          * integer greater than or equal to the desired number of
                          * subjects (faces). We only allow the user to select a maximum
                          * desired amount of four, though the application will attempt
                          * to perform gaze detection for any number of subjects detected
                          * by FaceDetector.
                          */
-                        if (numberOfFacesDetected >= desiredNumberOfSubjects) {
-                            /*
-                             * Now, we call the detectGazes method of GazeDetector to
-                             * determine the number of faces which are looking toward the
-                             * camera and update the value of
-                             * numberOfFacesLookingTowardCamera.
-                             */
-                            numberOfGazesDetected = gazeDetector.detectGazesWithDistances(faces, mediaImage);
-                            /*
-                             * We now verify if number of subjects looking toward the
-                             * camera is equivalent to the number of faces detected by
-                             * FaceDetector.
-                             */
-                            if (numberOfFacesDetected == numberOfGazesDetected) {
-                                capturePhoto();
-                            }
+                        if (numberOfFacesDetected == numberOfGazesDetected && numberOfFacesDetected >= desiredNumberOfSubjects) {
+                            capturePhoto();
                         }
                         /*
                          * Finally, we update our two UI TextViews to reflect changes
@@ -474,6 +469,9 @@ public class MainActivity extends AppCompatActivity implements DrawingListener {
     }
 
     private void openResourceFile() {
+        /*
+         * https://stackoverflow.com/questions/12242274/android-opencv-eye-detection
+         */
         try {
             InputStream inputStream = getResources().openRawResource(R.raw.haarcascade_eye);
             File cascadeDirectory = getDir("cascades", Context.MODE_PRIVATE);

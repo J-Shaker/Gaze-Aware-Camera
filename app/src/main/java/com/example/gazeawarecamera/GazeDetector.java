@@ -174,6 +174,9 @@ public class GazeDetector {
 
 
     private ArrayList<Point> getPupilCoordinates(Mat greyImage, Rect faceBoundingBox) {
+        /*
+         * https://medium.com/@stepanfilonov/tracking-your-eyes-with-python-3952e66194a6
+         */
 
         ArrayList<Point> centerPoints = new ArrayList<Point>();
 
@@ -194,7 +197,7 @@ public class GazeDetector {
 
         SimpleBlobDetector_Params parameters = new SimpleBlobDetector_Params();
         parameters.set_filterByCircularity(true);
-        parameters.set_minCircularity((float) 0.7);
+        parameters.set_minCircularity((float) 0.5);
         parameters.set_maxCircularity((float) 1.0);
         SimpleBlobDetector detector = SimpleBlobDetector.create(parameters);
 
@@ -209,12 +212,11 @@ public class GazeDetector {
             Imgproc.dilate(binaryEye, binaryEye, dilationElement, defAnchor, 4);
             Imgproc.medianBlur(binaryEye, binaryEye, 5);
 
-            MatOfKeyPoint keyPoints = new MatOfKeyPoint();
-            detector.detect(binaryEye, keyPoints);
-
             Bitmap temp1 = generateBitmapFromMatrix(greyEye);
             Bitmap temp2 = generateBitmapFromMatrix(binaryEye);
 
+            MatOfKeyPoint keyPoints = new MatOfKeyPoint();
+            detector.detect(binaryEye, keyPoints);
             KeyPoint[] keyPointsArray = keyPoints.toArray();
 
             for (int j = 0; j < keyPointsArray.length; j++) {
@@ -222,6 +224,7 @@ public class GazeDetector {
                 double adjustedX = point.x + eyeBoundingBoxes[i].x + faceBoundingBox.left;
                 double adjustedY = point.y + eyeBoundingBoxes[i].y + faceBoundingBox.top;
                 Point adjustedPoint = new Point(adjustedX, adjustedY);
+                System.out.println(adjustedPoint.toString());
                 centerPoints.add(adjustedPoint);
             }
 
