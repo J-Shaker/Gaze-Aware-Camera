@@ -14,7 +14,6 @@ package com.example.gazeawarecamera;
 import static android.content.ContentValues.TAG;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -27,8 +26,6 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.media.Image;
 import android.os.Bundle;
-import android.os.Environment;
-import android.os.Handler;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.util.Size;
@@ -73,7 +70,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -399,7 +395,7 @@ public class MainActivity extends AppCompatActivity implements DrawingListener {
         albumButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                openAlbum();
+                openGallery();
             }
         });
         /*
@@ -426,7 +422,7 @@ public class MainActivity extends AppCompatActivity implements DrawingListener {
 
     }
 
-    private void openAlbum() {
+    private void openGallery() {
         Intent intent = new Intent(Intent.ACTION_VIEW, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         startActivity(intent);
     }
