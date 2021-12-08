@@ -221,7 +221,7 @@ public class GazeDetector {
 
         SimpleBlobDetector_Params parameters = new SimpleBlobDetector_Params();
         parameters.set_filterByCircularity(true);
-        parameters.set_minCircularity((float) 0.5);
+        parameters.set_minCircularity((float) 0.20);
         parameters.set_maxCircularity((float) 1.0);
         SimpleBlobDetector detector = SimpleBlobDetector.create(parameters);
 
@@ -231,7 +231,7 @@ public class GazeDetector {
 
             Mat binaryEye = new Mat();
 
-            Imgproc.adaptiveThreshold(greyEye, binaryEye, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 69, 39);
+            Imgproc.adaptiveThreshold(greyEye, binaryEye, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 81, 55);
             Imgproc.erode(binaryEye, binaryEye, erodeElement, defAnchor, 2);
             Imgproc.dilate(binaryEye, binaryEye, dilationElement, defAnchor, 4);
             Imgproc.medianBlur(binaryEye, binaryEye, 5);
@@ -460,9 +460,9 @@ public class GazeDetector {
             } else {
 
                 if (horizontalDifference < 0) {
-                    System.out.println("Face " + (i + 1) + " is looking to the left.\n");
-                } else {
                     System.out.println("Face " + (i + 1) + " is looking to the right.\n");
+                } else {
+                    System.out.println("Face " + (i + 1) + " is looking to the left.\n");
                 }
 
                 if (verticalDifference < 0) {
