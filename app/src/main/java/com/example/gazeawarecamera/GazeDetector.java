@@ -399,20 +399,22 @@ public class GazeDetector {
             Point leftPupilCenterPoint = isolatePupilCoordinates(pupilCoordinates, leftEar.getPosition(), nose.getPosition());
             Point rightPupilCenterPoint = isolatePupilCoordinates(pupilCoordinates, nose.getPosition(), rightEar.getPosition());
 
+            if (leftPupilCenterPoint == null) {
+                System.out.println("The coordinates of the left pupil could not be determined.");
+            } else {
+                System.out.println("Face: " + (i + 1) + ", left pupil: " + leftPupilCenterPoint.toString());
+            }
+
+            if (rightPupilCenterPoint == null) {
+                System.out.println("The coordinates of the right pupil could not be determined.");
+            } else {
+                System.out.println("Face: " + (i + 1) + ", right pupil: " + rightPupilCenterPoint.toString());
+            }
+
             if (leftPupilCenterPoint == null || rightPupilCenterPoint == null) {
-
-                if (leftPupilCenterPoint == null) {
-                    System.out.println("The coordinates of the left pupil could not be determined.");
-                }
-
-                if (rightPupilCenterPoint == null) {
-                    System.out.println("The coordinates of the right pupil could not be determined.");
-                }
-
                 continue;
             }
-            System.out.println("Face: " + (i + 1) + ", left pupil: " + leftPupilCenterPoint.toString());
-            System.out.println("Face: " + (i + 1) + ", right pupil: " + rightPupilCenterPoint.toString());
+
             /*
              * Now that we have our two pupil coordinates, we can compare their locations to the
              * locations of landmarks. We are only concerned with an eye that is looking forward.
@@ -456,20 +458,19 @@ public class GazeDetector {
                 System.out.println("Gaze detected on face " + (i + 1) + "!\n");
                 numberOfFacesLookingTowardCamera += 1;
             } else {
+
                 if (horizontalDifference < 0) {
-                    if (horizontalDifference >= 0) {
-                        System.out.println("Face " + (i + 1) + " is looking to the left.\n");
-                    } else {
-                        System.out.println("Face " + (i + 1) + " is looking to the right.\n");
-                    }
+                    System.out.println("Face " + (i + 1) + " is looking to the left.\n");
+                } else {
+                    System.out.println("Face " + (i + 1) + " is looking to the right.\n");
                 }
+
                 if (verticalDifference < 0) {
-                    if (verticalDifference >= 0) {
-                        System.out.println("Face " + (i + 1) + " is looking up.\n");
-                    } else {
-                        System.out.println("Face " + (i + 1) + " is looking down.\n");
-                    }
+                    System.out.println("Face " + (i + 1) + " is looking up.\n");
+                } else {
+                    System.out.println("Face " + (i + 1) + " is looking down.\n");
                 }
+
             }
         }
         /*
