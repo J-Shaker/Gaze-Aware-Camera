@@ -221,7 +221,7 @@ public class GazeDetector {
 
         SimpleBlobDetector_Params parameters = new SimpleBlobDetector_Params();
         parameters.set_filterByCircularity(true);
-        parameters.set_minCircularity((float) 0.20);
+        parameters.set_minCircularity((float) 0.30);
         parameters.set_maxCircularity((float) 1.0);
         SimpleBlobDetector detector = SimpleBlobDetector.create(parameters);
 
