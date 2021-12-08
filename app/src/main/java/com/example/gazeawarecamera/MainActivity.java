@@ -78,10 +78,7 @@ import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity implements DrawingListener {
 
-    public static final int PIXEL_COUNT_HORIZONTAL = 1920;
-    public static final int PIXEL_COUNT_VERTICAL = 1080;
-
-    public static int desiredNumberOfSubjects = 1;
+    public static int desiredNumberOfSubjects = 3;
 
     private final String MESSAGE_DESIRED_SUBJECTS_CHANGED = "The desired number of subjects has been changed to ";
     private final String MESSAGE_PHOTO_SAVED = "Photo saved!";
@@ -227,7 +224,7 @@ public class MainActivity extends AppCompatActivity implements DrawingListener {
          * care about what is happening at the singular, latest instance.
          */
         ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
-                .setTargetResolution(new Size(PIXEL_COUNT_HORIZONTAL, PIXEL_COUNT_VERTICAL))
+                .setTargetResolution(new Size(GazeDetector.PIXEL_COUNT_HORIZONTAL, GazeDetector.PIXEL_COUNT_VERTICAL))
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build();
         /*
@@ -320,33 +317,33 @@ public class MainActivity extends AppCompatActivity implements DrawingListener {
                         updateGazeCounter(numberOfGazesDetected);
                     }
                 })
-                        .addOnFailureListener(new OnFailureListener() {
-                            @Override
-                            public void onFailure(@NonNull Exception e) {
-                                /*
-                                 * We are not equipped to handle any errors FaceDetector
-                                 * encounters, but we can update the UI to let the user know
-                                 * that their face is definitely undetected.
-                                 */
-                                updateFaceCounter(0);
-                                updateGazeCounter(0);
-                            }
-                        })
-                        .addOnCompleteListener(new OnCompleteListener<List<Face>>() {
-                            @Override
-                            public void onComplete(@NonNull Task<List<Face>> task) {
-                                /*
-                                 * The ImageProxy in memory must be closed because we have
-                                 * configured the camera to keep only the latest frame. If we
-                                 * failed to close the ImageProxy, we would not be able to
-                                 * analyze any more frames past the one which was not closed
-                                 * (which would always be the first in this case). Note that the
-                                 * onComplete method will run regardless of whether
-                                 * faceDetector.process succeeds or fails.
-                                 */
-                                imageProxy.close();
-                            }
-                        });
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        /*
+                         * We are not equipped to handle any errors FaceDetector
+                         * encounters, but we can update the UI to let the user know
+                         * that their face is definitely undetected.
+                         */
+                        updateFaceCounter(0);
+                        updateGazeCounter(0);
+                    }
+                })
+                .addOnCompleteListener(new OnCompleteListener<List<Face>>() {
+                    @Override
+                    public void onComplete(@NonNull Task<List<Face>> task) {
+                        /*
+                         * The ImageProxy in memory must be closed because we have
+                         * configured the camera to keep only the latest frame. If we
+                         * failed to close the ImageProxy, we would not be able to
+                         * analyze any more frames past the one which was not closed
+                         * (which would always be the first in this case). Note that the
+                         * onComplete method will run regardless of whether
+                         * faceDetector.process succeeds or fails.
+                         */
+                        imageProxy.close();
+                    }
+                });
             }
         });
         /*
