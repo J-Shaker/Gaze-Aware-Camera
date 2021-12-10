@@ -76,7 +76,10 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 
-public class MainActivity extends AppCompatActivity implements DrawingListener {
+public class MainActivity extends AppCompatActivity {
+
+    public static final int PIXEL_COUNT_HORIZONTAL = 1920;
+    public static final int PIXEL_COUNT_VERTICAL = 1080;
 
     public static int desiredNumberOfSubjects = 3;
 
@@ -99,31 +102,6 @@ public class MainActivity extends AppCompatActivity implements DrawingListener {
     private ImageCapture imageCapture;
 
     public static CascadeClassifier eyeCascade;
-
-    private final GazeDetector gazeDetector = new GazeDetector(this);
-
-    private static int getScreenWidth() {
-        return Resources.getSystem().getDisplayMetrics().widthPixels;
-    }
-
-    private static int getScreenHeight() {
-        return Resources.getSystem().getDisplayMetrics().heightPixels;
-    }
-
-    @Override
-    public void drawRectangles(ArrayList<Rect> rectangles) {
-        Bitmap bitmap = Bitmap.createBitmap(getScreenWidth(), getScreenHeight(), Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-        Paint paint = new Paint();
-        paint.setStyle(Paint.Style.STROKE);
-        paint.setColor(Color.YELLOW);
-        paint.setStrokeWidth(8);
-        paint.setAntiAlias(true);
-        for (int i = 0; i < rectangles.size(); i++) {
-            canvas.drawRect(rectangles.get(i), paint);
-        }
-        imageView.setImageBitmap(bitmap);
-    }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -224,7 +202,7 @@ public class MainActivity extends AppCompatActivity implements DrawingListener {
          * care about what is happening at the singular, latest instance.
          */
         ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
-                .setTargetResolution(new Size(GazeDetector.PIXEL_COUNT_HORIZONTAL, GazeDetector.PIXEL_COUNT_VERTICAL))
+                .setTargetResolution(new Size(PIXEL_COUNT_HORIZONTAL, PIXEL_COUNT_VERTICAL))
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build();
         /*
@@ -281,20 +259,31 @@ public class MainActivity extends AppCompatActivity implements DrawingListener {
                     @Override
                     public void onSuccess(List<Face> faces) {
                         /*
+                         * The first thing we'll do is draw each of the face bounding boxes.
+                         */
+                        for (int i = 0; i < faces.size(); i++) {
+                            /*
+                             * In order for the rectangle to display properly, we must call the
+                             * correctBoundingBox method on it first. This flips it along the
+                             * x-axis.
+                             */
+                            drawRectangle(correctBoundingBox(faces.get(i).getBoundingBox()));
+                        }
+                        /*
                          * We let numberOfFacesDetected be equal to faces.size(), as
                          * this is the list containing all detected faces and therefore
                          * it's size reveals the amount. Then we assume that there are
                          * 0 faces looking toward the camera.
                          */
                         int numberOfFacesDetected = faces.size();
-                        int numberOfGazesDetected = 0;
+                        int numberOfGazesDetected;
                         /*
                          * Now, we call the detectGazes method of GazeDetector to
                          * determine the number of faces which are looking toward the
                          * camera and update the value of
                          * numberOfFacesLookingTowardCamera.
                          */
-                        numberOfGazesDetected = gazeDetector.detectGazesWithDistances(faces, mediaImage);
+                        numberOfGazesDetected = GazeDetector.detectGazesWithDistances(faces, mediaImage);
                         /*
                          * We now verify if number of subjects looking toward the
                          * camera is equivalent to the number of faces detected by
@@ -412,6 +401,54 @@ public class MainActivity extends AppCompatActivity implements DrawingListener {
             }
         });
 
+    }
+
+    private static int getScreenWidth() {
+        return Resources.getSystem().getDisplayMetrics().widthPixels;
+    }
+
+    private static int getScreenHeight() {
+        return Resources.getSystem().getDisplayMetrics().heightPixels;
+    }
+
+    /*
+     * This method flips bounding boxes on the y-axis. This is necessary because the various
+     * libraries we are using to analyze the image have their left and right sides opposite the
+     * user of the application. This flips the bounding box so that it can be displayed in the
+     * proper location on the screen.
+     */
+    private Rect correctBoundingBox(Rect boundingBox) {
+        /*
+         * A Rect object takes in four arguments: left, top, right, and bottom.
+         */
+        int left;
+        if (boundingBox.left < PIXEL_COUNT_HORIZONTAL / 2) {
+            left = (boundingBox.left + 2 * Math.abs(boundingBox.left - PIXEL_COUNT_HORIZONTAL / 2));
+        } else {
+            left = (boundingBox.left - 2 * Math.abs(boundingBox.left - PIXEL_COUNT_HORIZONTAL / 2));
+        }
+
+        int right;
+        if (boundingBox.right < PIXEL_COUNT_HORIZONTAL / 2) {
+            right = (boundingBox.right + 2 * Math.abs(boundingBox.right - PIXEL_COUNT_HORIZONTAL / 2));
+        } else {
+            right = (boundingBox.right - 2 * Math.abs(boundingBox.right - PIXEL_COUNT_HORIZONTAL / 2));
+        }
+
+        return new Rect(left, boundingBox.top, right, boundingBox.bottom);
+
+    }
+
+    private void drawRectangle(Rect rectangle) {
+        Bitmap bitmap = Bitmap.createBitmap(getScreenWidth(), getScreenHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        Paint paint = new Paint();
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setColor(Color.YELLOW);
+        paint.setStrokeWidth(8);
+        paint.setAntiAlias(true);
+        canvas.drawRect(rectangle, paint);
+        imageView.setImageBitmap(bitmap);
     }
 
     private void openGallery() {
