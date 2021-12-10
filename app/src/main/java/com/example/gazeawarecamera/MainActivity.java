@@ -69,7 +69,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -103,6 +102,16 @@ public class MainActivity extends AppCompatActivity {
 
     public static CascadeClassifier eyeCascade;
 
+
+    /*
+     * Integers used for analyzing test results.
+     */
+    private int totalNumberOfImagesAnalyzed = 0;
+    private int totalNumberOfFacesDetected = 0;
+    private int numberOfTimesEachGazeWasCaptured = 0;
+
+
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -122,6 +131,13 @@ public class MainActivity extends AppCompatActivity {
         openResourceFile();
     }
 
+
+
+    /*
+     * A method that asks the user for permission to use the camera if it is not already granted.
+     *
+     * Contributed by Mathew.
+     */
     private void getPermissionToUseCamera() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 1);
@@ -134,8 +150,7 @@ public class MainActivity extends AppCompatActivity {
      * following the official Android Developers Docs found here: https://developer.android.com/training/camerax.
      * Additionally, the imageAnalysis binding uses Google ML Kit for face and facial landmark
      * detection. That code was implemented with the help of ML Kit Docs found here:
-     * https://developers.google.com/ml-kit/reference/android. There are comments explaining what
-     * each line or lines of code do.
+     * https://developers.google.com/ml-kit/reference/android.
      */
     public void startCamera() {
         cameraProviderFuture = ProcessCameraProvider.getInstance(this);
@@ -212,6 +227,8 @@ public class MainActivity extends AppCompatActivity {
          * from outside the class.
          */
         imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(this), imageProxy -> {
+            totalNumberOfImagesAnalyzed += 1;
+
             /*
              * The ImageProxy object given as an argument to analyze is the image the camera is
              * currently looking at as an object in memory. The first thing we need to do is
@@ -258,17 +275,22 @@ public class MainActivity extends AppCompatActivity {
                 Task<List<Face>> result = faceDetector.process(image).addOnSuccessListener(new OnSuccessListener<List<Face>>() {
                     @Override
                     public void onSuccess(List<Face> faces) {
+
+                        totalNumberOfFacesDetected += faces.size();
+
                         /*
                          * The first thing we'll do is draw each of the face bounding boxes.
                          */
+                        Rect[] boundingBoxes = new Rect[faces.size()];
                         for (int i = 0; i < faces.size(); i++) {
                             /*
                              * In order for the rectangle to display properly, we must call the
                              * correctBoundingBox method on it first. This flips it along the
                              * x-axis.
                              */
-                            drawRectangle(correctBoundingBox(faces.get(i).getBoundingBox()));
+                            boundingBoxes[i] = correctBoundingBox(faces.get(i).getBoundingBox());
                         }
+                        drawRectangles(boundingBoxes);
                         /*
                          * We let numberOfFacesDetected be equal to faces.size(), as
                          * this is the list containing all detected faces and therefore
@@ -294,6 +316,10 @@ public class MainActivity extends AppCompatActivity {
                          * to perform gaze detection for any number of subjects detected
                          * by FaceDetector.
                          */
+                        if (numberOfFacesDetected == numberOfGazesDetected) {
+                            numberOfTimesEachGazeWasCaptured += 1;
+                        }
+
                         if (numberOfFacesDetected == numberOfGazesDetected && numberOfFacesDetected >= desiredNumberOfSubjects) {
                             capturePhoto();
                         }
@@ -334,6 +360,13 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
             }
+            System.out.println("Total number of images analyzed: " + totalNumberOfImagesAnalyzed);
+            System.out.println("Total number of faces detected: " + totalNumberOfFacesDetected);
+            System.out.println("Total number of eyes detected: " + GazeDetector.totalNumberOfEyesDetected);
+            System.out.println("Total number of pupils detected: " + GazeDetector.totalNumberOfPupilsDetected);
+            System.out.println("Total number of gazes detected: " + GazeDetector.totalNumberOfGazesDetected);
+            System.out.println("Number of times successful: " + numberOfTimesEachGazeWasCaptured);
+
         });
         /*
          * With imageAnalysis initialized, it can be bound to the hardware (cameraProvider) as
@@ -346,6 +379,8 @@ public class MainActivity extends AppCompatActivity {
      * The next set of methods are responsible for functionality pertaining to the UI. This includes
      * updating the text on screen to adapt to changes in variables as well as setting the behavior
      * of buttons when clicked by the user.
+     *
+     * Contributed by Mathew.
      */
     private void updateFaceCounter(int numberOfFaces) {
         /*
@@ -367,6 +402,8 @@ public class MainActivity extends AppCompatActivity {
      * setOnClickListener is an object that allows us to tell the application what to do when a UI
      * element is pressed. We have three buttons and are setting each of their onClickListeners in
      * this single method.
+     *
+     * Contributed by Mathew.
      */
     private void setOnClickListeners() {
         /*
@@ -403,19 +440,13 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private static int getScreenWidth() {
-        return Resources.getSystem().getDisplayMetrics().widthPixels;
-    }
-
-    private static int getScreenHeight() {
-        return Resources.getSystem().getDisplayMetrics().heightPixels;
-    }
-
     /*
      * This method flips bounding boxes on the y-axis. This is necessary because the various
      * libraries we are using to analyze the image have their left and right sides opposite the
      * user of the application. This flips the bounding box so that it can be displayed in the
      * proper location on the screen.
+     *
+     * Contributed by Brayden.
      */
     private Rect correctBoundingBox(Rect boundingBox) {
         /*
@@ -439,7 +470,29 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void drawRectangle(Rect rectangle) {
+    /*
+     * The next two methods return the screen width and height in pixels. In our testing across a
+     * few different devices, it is necessary to use these methods for setting the size of the
+     * images capture by the camera for some devices.
+     *
+     * Contributed by Mathew, who found the code here:
+     * https://stackoverflow.com/questions/4743116/get-screen-width-and-height-in-android
+     */
+    public static int getScreenWidth() {
+        return Resources.getSystem().getDisplayMetrics().widthPixels;
+    }
+
+    public static int getScreenHeight() {
+        return Resources.getSystem().getDisplayMetrics().heightPixels;
+    }
+
+    /*
+     * This method takes in a Rect object and draws it on the screen using a Canvas object.
+     *
+     * Contributed by Mathew, who found the code here:
+     * https://stackoverflow.com/questions/7344497/android-canvas-draw-rectangle
+     */
+    private void drawRectangles(Rect[] rectangles) {
         Bitmap bitmap = Bitmap.createBitmap(getScreenWidth(), getScreenHeight(), Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
         Paint paint = new Paint();
@@ -447,15 +500,28 @@ public class MainActivity extends AppCompatActivity {
         paint.setColor(Color.YELLOW);
         paint.setStrokeWidth(8);
         paint.setAntiAlias(true);
-        canvas.drawRect(rectangle, paint);
+        for (int i = 0; i < rectangles.length; i++) {
+            canvas.drawRect(rectangles[i], paint);
+        }
         imageView.setImageBitmap(bitmap);
     }
 
+    /*
+     * This method opens the OS default photo gallery by instantiating it as a new Activity.
+     *
+     * Contributed by John.
+     */
     private void openGallery() {
         Intent intent = new Intent(Intent.ACTION_VIEW, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         startActivity(intent);
     }
 
+    /*
+     * This method is used for capturing photos.
+     *
+     * Contributed by John. Some code was obtained from:
+     * https://android.googlesource.com/platform/frameworks/support/+/refs/heads/androidx-main/camera/integration-tests/coretestapp/src/main/java/androidx/camera/integration/core/CameraXActivity.java
+     */
     private void capturePhoto() {
 
         ContentValues contentValues = new ContentValues();
@@ -476,7 +542,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
             }
-
             @Override
             public void onError(@NonNull ImageCaptureException error) {
                 runOnUiThread(new Runnable() {
@@ -490,6 +555,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void openSelection() {
+        /*
+         * Contributed by John
+         */
         PopupMenu selectionMenu = new PopupMenu(MainActivity.this, selectionButton);
         selectionMenu.getMenuInflater().inflate(R.menu.popup_menu, selectionMenu.getMenu());
         selectionMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
@@ -504,6 +572,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void openResourceFile() {
         /*
+         * Contributed by Mathew, using code found here:
          * https://stackoverflow.com/questions/12242274/android-opencv-eye-detection
          */
         try {

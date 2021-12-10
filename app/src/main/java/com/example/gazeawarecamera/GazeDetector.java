@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.opencv.android.Utils;
+import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.KeyPoint;
 import org.opencv.core.Mat;
@@ -49,10 +50,22 @@ public class GazeDetector {
     private static final double HORIZONTAL_TOLERANCE = 20.0;
     private static final double VERTICAL_TOLERANCE = 5.0;
 
+
+    /*
+     * Integers used for analyzing test results.
+     */
+    public static int totalNumberOfGazesDetected = 0;
+    public static int totalNumberOfEyesDetected = 0;
+    public static int totalNumberOfPupilsDetected = 0;
+    public static int totalNumberOfTimesEveryGazeWasCaptured = 0;
+
+
     /*
      * This enumeration allows us to classify the direction of a face's gaze. These classifications
      * will be given once the angle of the pupil relative to the center of the eye is determined.
      * Commented next to them are the degree ranges which warrant the given classification.
+     *
+     * Contributed by Mathew.
      */
     private enum Direction {
         TOP_RIGHT_LOW, // (0-44 degrees)
@@ -97,6 +110,8 @@ public class GazeDetector {
          * A method that converts from Android Graphics Rect to OpenCV Core Rect. These classes
          * represent the same thing, but we often need to switch between them. If an object is
          * passed in that is neither version of the Rect object, null will be returned.
+         *
+         * Contributed by Mathew
          */
         if (rectangle instanceof org.opencv.core.Rect) {
             /*
@@ -130,6 +145,8 @@ public class GazeDetector {
     /*
      * Android Studio allows you to view Bitmaps while debugging. This method converts a Mat object
      * to a Bitmap that we can view while debugging.
+     *
+     * Contributed by Brayden
      */
     private Bitmap convertMatToBitmap(Mat matrix) {
         Bitmap bitmap = Bitmap.createBitmap(matrix.cols(), matrix.rows(), Bitmap.Config.ARGB_8888);
@@ -154,12 +171,89 @@ public class GazeDetector {
         return new Mat(h, w, CvType.CV_8UC1, y_plane, y_plane_step);
     }
 
-    private static ArrayList<Point> getPupilCoordinates(Mat greyImage, Rect faceBoundingBox) {
+    /*
+     * Our most up to date method for finding pupils, contributed by Mathew using some code from
+     * http://romanhosek.cz/android-eye-detection-and-tracking-with-opencv/
+     * and most code from the getPupilCoordinatesWithBlobDetectorMethod
+     */
+    private static ArrayList<Point> getPupilCoordinatesWithDarkestLocation(Mat greyImage, Rect faceBoundingBox) {
+        /*
+         * First, we need to create a matrix of just the face we are looking at from the original
+         * image. This is easy to accomplish using our face bounding box, we just need to change it
+         * to an OpenCV bounding box first.
+         */
+        Mat greyFace = new Mat(greyImage, (org.opencv.core.Rect) changeRect(faceBoundingBox));
+        /*
+         * Now, to eliminate false detections by the CascadeClassifier, we will further constrain
+         * the search area to just the top half of the face. This will eliminate nostrils from the
+         * image.
+         */
+        Mat croppedFace = new Mat(greyFace, new org.opencv.core.Rect(0, 0, greyFace.cols(), greyFace.rows()/2));
+        /*
+         * detectMultiScale initializes a MatOfRect of object. This is a matrix where each element
+         * is a rectangle - the eye bounding boxes. The third and fourth arguments for
+         * detectMultiScale are scaleFactor and minNeighbors, where higher scaleFactor typically
+         * results in more detection, and higher minNeighbours results in lower detection. We found
+         * a balance successfully detects eyes most of the time. Finally, MatOfRect has a
+         * convenient method which allows us to convert it to an array. This will make it much
+         * easier to work with
+         */
+        MatOfRect eyes = new MatOfRect();
+        eyeCascade.detectMultiScale(croppedFace, eyes, 1.3, 25);
+        org.opencv.core.Rect[] eyeBoundingBoxes = eyes.toArray();
+
+        totalNumberOfEyesDetected += eyeBoundingBoxes.length;
+
+        /*
+         * Now, we need an ArrayList to store the pupil coordinates that we find. We cannot predict
+         * the order in which the pupils will be placed, but we have a method which will figure it
+         * out for us.
+         */
+        ArrayList<Point> pupilCoordinates = new ArrayList<Point>();
+        /*
+         * Now we can start iterating over the
+         */
+        for (int i = 0; i < eyeBoundingBoxes.length; i++) {
+            /*
+             * We can use our bounding box and our face image to get the region of the eye as a Mat.
+             */
+            Mat greyEye = new Mat(greyFace, eyeBoundingBoxes[i]);
+            /*
+             * minMaxLoc finds the darkest region of an image.
+             */
+            Core.MinMaxLocResult pupil = Core.minMaxLoc(greyEye);
+            /*
+             * We must translate the coordinates of the pupil back into the original image, so
+             * we make a new Point and sum the corners of each Matrix we've stepped through. Then
+             * we can finally add the Point to the list.
+             */
+            Point pupilCoordinate = new Point(pupil.minLoc.x + eyeBoundingBoxes[i].x + faceBoundingBox.left, pupil.minLoc.y + eyeBoundingBoxes[i].y + faceBoundingBox.top);
+            pupilCoordinates.add(pupilCoordinate);
+        }
+
+        System.out.println("The number of pupils detected is: " + pupilCoordinates.size());
+
+        totalNumberOfPupilsDetected += pupilCoordinates.size();
+
+        return pupilCoordinates;
+    }
+
+
+    // ---------------------------------------------------------------------------------------------
+
+
+    /*
+     * Our deprecated method for finding pupils as of 12/10/2021
+     */
+    private static ArrayList<Point> getPupilCoordinatesWithBlobDetector(Mat greyImage, Rect faceBoundingBox) {
         /*
          * https://medium.com/@stepanfilonov/tracking-your-eyes-with-python-3952e66194a6 - methodology
          * https://www.tutorialspoint.com/java_dip/eroding_dilating.htm - values for erosion and dilation
+         *
+         * A joint effort contributed by Mathew, John, and Brayden using the help of the sources
+         * above.
          */
-        ArrayList<Point> centerPoints = new ArrayList<Point>();
+        ArrayList<Point> pupilCoordinates = new ArrayList<Point>();
 
         Mat greyFace = new Mat(greyImage, (org.opencv.core.Rect) changeRect(faceBoundingBox));
 
@@ -170,7 +264,7 @@ public class GazeDetector {
         eyeCascade.detectMultiScale(croppedFace, eyes, 1.3, 25);
         org.opencv.core.Rect[] eyeBoundingBoxes = eyes.toArray();
 
-        // -----------------------------------------------------------------------------------------
+        totalNumberOfEyesDetected += eyeBoundingBoxes.length;
 
         int erosion_size = 2;
         int dilation_size = 2;
@@ -190,7 +284,7 @@ public class GazeDetector {
 
             Mat binaryEye = new Mat();
 
-            Imgproc.adaptiveThreshold(greyEye, binaryEye, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 81, 61);
+            Imgproc.adaptiveThreshold(greyEye, binaryEye, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY, 81, 55);
             Imgproc.erode(binaryEye, binaryEye, erodeElement, defAnchor, 2);
             Imgproc.dilate(binaryEye, binaryEye, dilationElement, defAnchor, 4);
             Imgproc.medianBlur(binaryEye, binaryEye, 5);
@@ -199,27 +293,31 @@ public class GazeDetector {
             detector.detect(binaryEye, keyPoints);
             KeyPoint[] keyPointsArray = keyPoints.toArray();
 
-            // -----------------------------------------------------------------------------------------
-
             for (int j = 0; j < keyPointsArray.length; j++) {
                 Point point = keyPointsArray[j].pt;
                 double adjustedX = point.x + eyeBoundingBoxes[i].x + faceBoundingBox.left;
                 double adjustedY = point.y + eyeBoundingBoxes[i].y + faceBoundingBox.top;
                 Point adjustedPoint = new Point(adjustedX, adjustedY);
                 System.out.println("Eye: " + (i + 1) + ", pupil " + (j + 1) + ": " + adjustedPoint.toString());
-                centerPoints.add(adjustedPoint);
+                pupilCoordinates.add(adjustedPoint);
             }
 
         }
 
-        if (centerPoints.size() > 2) {
+        totalNumberOfPupilsDetected += pupilCoordinates.size();
+
+        if (pupilCoordinates.size() > 2) {
             System.out.println("Warning: SimpleBlobDetector located more than two blobs for this face. Results may be inaccurate.");
-        } else {
-            System.out.println("The number of pupils detected is: " + centerPoints.size());
         }
 
-        return centerPoints;
+        System.out.println("The number of pupils detected is: " + pupilCoordinates.size());
+
+        return pupilCoordinates;
     }
+
+
+    // ---------------------------------------------------------------------------------------------
+
 
     /*
      * Our GazeDetector takes in a List of faces and an ArrayList of Points. These points represent
@@ -229,6 +327,8 @@ public class GazeDetector {
      * an ear and the nose, we can isolate these points by finding the point such that the sum of
      * the distances between the ear and the point and the point and the nose is equal to the
      * distance between the nose and the ear.
+     *
+     * Contributed by Mathew.
      */
     private static Point isolatePupilCoordinates(ArrayList<Point> points, PointF minimumX, PointF maximumX) {
         /*
@@ -268,6 +368,9 @@ public class GazeDetector {
         return null;
     }
 
+    /*
+     * This is the primary GazeDetection method. A joint effort contributed by Mathew and John.
+     */
     public static int detectGazesWithDistances(@NonNull List<Face> faces, Image originalImage) {
         /*
          * First, since we are using OpenCV for image processing, we need to convert our image into
@@ -303,7 +406,7 @@ public class GazeDetector {
              */
             try {
                 if (faces.get(i).getLeftEyeOpenProbability() < 0.9 || faces.get(i).getRightEyeOpenProbability() < 0.9) {
-                    System.out.println("The probability of one or more eyes on face " + i + " being open is less than 90%.");
+                    System.out.println("The probability of one or more eyes on face " + (i + 1) + " being open is less than 90%.");
                     continue;
                 }
             } catch (NullPointerException e) {
@@ -335,7 +438,7 @@ public class GazeDetector {
              * discuss that below.
              */
             Rect faceBoundingBox = faces.get(i).getBoundingBox();
-            ArrayList<Point> pupilCoordinates = getPupilCoordinates(imageMatrix, faceBoundingBox);
+            ArrayList<Point> pupilCoordinates = getPupilCoordinatesWithDarkestLocation(imageMatrix, faceBoundingBox);
             /*
              * We now have a list of OpenCV Point objects which correspond to the coordinates of the
              * centers of the pupils for each eye in the current face. However, we do not know which
@@ -408,6 +511,7 @@ public class GazeDetector {
             if (Math.abs(horizontalDifference) <= HORIZONTAL_TOLERANCE && Math.abs(verticalDifference) <= VERTICAL_TOLERANCE) {
                 System.out.println("Gaze detected on face " + (i + 1) + "!\n");
                 numberOfFacesLookingTowardCamera += 1;
+                totalNumberOfGazesDetected += 1;
             } else {
                 if (horizontalDifference < 0) {
                     System.out.println("Face " + (i + 1) + " is looking to the right.\n");
@@ -435,6 +539,8 @@ public class GazeDetector {
      * method might be useful is in determining the exact direction someone is looking, but that is
      * outside the scope of the project. If we have time, we may wish to determine the direction and
      * then place it above the corresponding face bounding box.
+     *
+     * A joint effort contributed by Mathew and John.
      */
     public static int detectGazesWithAngles(@NonNull List<Face> faces, Image image) {
         /*
@@ -497,7 +603,7 @@ public class GazeDetector {
              * Now we can pass those into our method and get back the list of coordinates. The list
              * should have a size of two, but it could be larger. We discuss that below.
              */
-            ArrayList<Point> pupilCoordinates = getPupilCoordinates(imageMatrix, faceBoundingBox);
+            ArrayList<Point> pupilCoordinates = getPupilCoordinatesWithBlobDetector(imageMatrix, faceBoundingBox);
             /*
              * We now have a list of OpenCV Point objects which correspond to the coordinates of the
              * centers of the pupils for each eye in the current face. However, we do not know which

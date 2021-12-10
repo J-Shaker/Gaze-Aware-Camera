@@ -25,6 +25,8 @@ import org.opencv.core.Point;
  * implementation of a point, called PointF. Note that both implementations of point contain public
  * class variables called x and y. This makes implementing methods with different point objects
  * easy, but may cause confusion when you read the code.
+ *
+ * Contributed by Mathew and John.
  */
 public class Geometry {
     /*

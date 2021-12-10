@@ -1,0 +1,1 @@
+C:\Users\mbilo\AndroidStudioProjects\Gaze-Aware-Camera-2\openCVLibrary454\build\intermediates\cxx\Debug\1y69a1t7\obj\arm64-v8a
