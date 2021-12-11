@@ -40,6 +40,9 @@ import org.opencv.features2d.SimpleBlobDetector;
 import org.opencv.features2d.SimpleBlobDetector_Params;
 import org.opencv.imgproc.Imgproc;
 
+/*
+ * https://opencv.org/android/
+ */
 
 public class GazeDetector {
 
@@ -57,7 +60,6 @@ public class GazeDetector {
     public static int totalNumberOfGazesDetected = 0;
     public static int totalNumberOfEyesDetected = 0;
     public static int totalNumberOfPupilsDetected = 0;
-    public static int totalNumberOfTimesEveryGazeWasCaptured = 0;
 
 
     /*
@@ -233,8 +235,6 @@ public class GazeDetector {
 
         System.out.println("The number of pupils detected is: " + pupilCoordinates.size());
 
-        totalNumberOfPupilsDetected += pupilCoordinates.size();
-
         return pupilCoordinates;
     }
 
@@ -304,8 +304,6 @@ public class GazeDetector {
 
         }
 
-        totalNumberOfPupilsDetected += pupilCoordinates.size();
-
         if (pupilCoordinates.size() > 2) {
             System.out.println("Warning: SimpleBlobDetector located more than two blobs for this face. Results may be inaccurate.");
         }
@@ -359,6 +357,7 @@ public class GazeDetector {
              * does, we have found our point, and will return it.
              */
             if (distanceFromMinToPoint + distanceFromPointToMax == distanceFromMinToMax) {
+                totalNumberOfPupilsDetected += 1;
                 return points.get(i);
             }
         }
@@ -378,12 +377,6 @@ public class GazeDetector {
          * care that the matrix returned is in grey.
          */
         Mat imageMatrix = imageToGreyMatrix(originalImage);
-        /*
-         * At the end of the loop, we will pass the bounding boxes of each face into a drawing
-         * method in MainActivity so that the user can see that their face is recognized. Here we
-         * instantiate the ArrayList of Rect objects in which we'll place these.
-         */
-        ArrayList<Rect> faceBoundingBoxes = new ArrayList<Rect>();
         /*
          * We assume that there is no one looking toward the camera.
          */

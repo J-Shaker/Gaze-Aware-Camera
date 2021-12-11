@@ -366,7 +366,6 @@ public class MainActivity extends AppCompatActivity {
             System.out.println("Total number of pupils detected: " + GazeDetector.totalNumberOfPupilsDetected);
             System.out.println("Total number of gazes detected: " + GazeDetector.totalNumberOfGazesDetected);
             System.out.println("Number of times successful: " + numberOfTimesEachGazeWasCaptured);
-
         });
         /*
          * With imageAnalysis initialized, it can be bound to the hardware (cameraProvider) as
